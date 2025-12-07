@@ -13,13 +13,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Lightbulb } from "lucide-react";
 import { useCaseOptions } from "@/lib/mock-data";
+import { SoundLibrarySidebar } from "@/components/sound-library-sidebar";
+import { SoundLibraryExample } from "@/lib/types";
 
 export default function BriefIntake() {
   const router = useRouter();
   const [brief, setBrief] = useState("");
   const [useCase, setUseCase] = useState("");
   const [referenceLinks, setReferenceLinks] = useState("");
+  const [selectedExample, setSelectedExample] = useState<SoundLibraryExample | null>(null);
+
+  const handleSelectExample = (example: SoundLibraryExample) => {
+    setSelectedExample(example);
+    // Pre-fill the brief with the example's description and prompt info
+    const exampleBrief = `${example.description}\n\nGenre: ${example.genre}\nMood: ${example.mood.join(", ")}\nInstruments: ${example.instruments.join(", ")}\n\nReference prompt: "${example.title}"`;
+    setBrief(exampleBrief);
+    if (example.purpose.length > 0) {
+      setUseCase(example.purpose[0]);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,19 +42,33 @@ export default function BriefIntake() {
       brief,
       useCase,
       referenceLinks: referenceLinks.split("\n").filter((link) => link.trim()),
+      selectedExample: selectedExample?.id,
     };
     localStorage.setItem("briefData", JSON.stringify(briefData));
     router.push("/prompt-review");
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-3xl">
+    <div className="flex min-h-screen">
+      <SoundLibrarySidebar onSelectExample={handleSelectExample} />
+      <div className="flex-1 px-4 py-12 overflow-auto">
+        <div className="container mx-auto max-w-4xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">New Audio Request</h1>
         <p className="text-gray-600">
           Describe what you need and we'll generate the perfect audio track
         </p>
       </div>
+
+      {selectedExample && (
+        <Alert className="mb-6 border-purple-200 bg-purple-50/50">
+          <Lightbulb className="h-4 w-4 text-purple-600" />
+          <AlertDescription>
+            Using "{selectedExample.title}" as reference. The brief has been pre-filled with this example's characteristics.
+            You can edit it as needed.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <form onSubmit={handleSubmit}>
         <Card>
@@ -114,6 +143,8 @@ export default function BriefIntake() {
           </CardContent>
         </Card>
       </form>
+        </div>
+      </div>
     </div>
   );
 }

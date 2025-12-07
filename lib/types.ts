@@ -78,3 +78,23 @@ export interface DeliveryInfo {
   turnaround_time_minutes: number;
   first_pass_approval: boolean;
 }
+
+export interface SoundLibraryExample {
+  id: string;
+  title: string;
+  description: string;
+  genre: string;
+  mood: string[];
+  instruments: string[];
+  purpose: string[];
+  duration: number;
+  audio_url: string;
+  prompt: string;
+  negative_prompt?: string;
+  stats: {
+    approval_rate: number;
+    total_uses: number;
+    avg_rating: number;
+  };
+  tags: string[];
+}
