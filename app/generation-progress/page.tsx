@@ -7,13 +7,15 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, CheckCircle2, Clock } from "lucide-react";
 
+type VariationStatus = "processing" | "queued" | "complete";
+
 export default function GenerationProgress() {
   const router = useRouter();
   const [progress, setProgress] = useState(0);
-  const [variationStates, setVariationStates] = useState([
-    { id: 1, status: "processing" as const },
-    { id: 2, status: "queued" as const },
-    { id: 3, status: "queued" as const },
+  const [variationStates, setVariationStates] = useState<Array<{ id: number; status: VariationStatus }>>([
+    { id: 1, status: "processing" },
+    { id: 2, status: "queued" },
+    { id: 3, status: "queued" },
   ]);
 
   useEffect(() => {
