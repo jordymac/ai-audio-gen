@@ -1,150 +1,293 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Lightbulb } from "lucide-react";
-import { useCaseOptions } from "@/lib/mock-data";
-import { SoundLibrarySidebar } from "@/components/sound-library-sidebar";
-import { SoundLibraryExample } from "@/lib/types";
+import { Sparkles, Plus, Eye, Lightbulb } from "lucide-react";
+import { GlossarySidebar } from "@/components/glossary-sidebar";
+import { PromptLibrarySidebar } from "@/components/prompt-library-sidebar";
+import { TextGlobalSettings } from "@/components/text-global-settings";
+import { TextInstrumentCard } from "@/components/text-instrument-card";
+import { TextSectionCard } from "@/components/text-section-card";
+import { SavedPrompt, PrototypePromptData, PrototypeEvaluationNotes } from "@/lib/types";
+import { useTextPromptStore } from "@/lib/store/text-prompt-store";
+import { usePrototypeStore, v1PromptData } from "@/lib/store/prototype-store";
+import { useState, useEffect } from "react";
 
-export default function BriefIntake() {
+export default function TextFirstPromptBuilder() {
   const router = useRouter();
-  const [brief, setBrief] = useState("");
-  const [useCase, setUseCase] = useState("");
-  const [referenceLinks, setReferenceLinks] = useState("");
-  const [selectedExample, setSelectedExample] = useState<SoundLibraryExample | null>(null);
+  const {
+    prompt,
+    addInstrument,
+    updateInstrument,
+    removeInstrument,
+    addSection,
+    updateSection,
+    removeSection,
+    getMasterPrompt,
+    setGlobal,
+    setNegativeGlobal,
+    reset,
+  } = useTextPromptStore();
 
-  const handleSelectExample = (example: SoundLibraryExample) => {
-    setSelectedExample(example);
-    // Pre-fill the brief with the example's description and prompt info
-    const exampleBrief = `${example.description}\n\nGenre: ${example.genre}\nMood: ${example.mood.join(", ")}\nInstruments: ${example.instruments.join(", ")}\n\nReference prompt: "${example.title}"`;
-    setBrief(exampleBrief);
-    if (example.purpose.length > 0) {
-      setUseCase(example.purpose[0]);
+  const { initializeV1 } = usePrototypeStore();
+
+  const [showPreview, setShowPreview] = useState(false);
+  const [selectedPrompt, setSelectedPrompt] = useState<SavedPrompt | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Pre-fill with v1 data on mount
+  useEffect(() => {
+    if (!isInitialized) {
+      // Reset first
+      reset();
+
+      // Set global
+      setGlobal(v1PromptData.global);
+      setNegativeGlobal(v1PromptData.negativeGlobal || '');
+
+      // Add instruments
+      v1PromptData.instruments.forEach((inst) => {
+        const id = addInstrument();
+        updateInstrument(id, {
+          name: inst.name,
+          description: inst.description,
+          negativeDescription: inst.negativeDescription || ''
+        });
+      });
+
+      // Add sections
+      v1PromptData.sections.forEach((sec) => {
+        const id = addSection();
+        updateSection(id, {
+          type: sec.type,
+          description: sec.description,
+          negativeDescription: sec.negativeDescription || ''
+        });
+      });
+
+      setIsInitialized(true);
     }
+  }, [isInitialized, reset, setGlobal, setNegativeGlobal, addInstrument, updateInstrument, addSection, updateSection]);
+
+  const handleSelectPrompt = (savedPrompt: SavedPrompt) => {
+    setSelectedPrompt(savedPrompt);
+    setTimeout(() => setSelectedPrompt(null), 3000);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const briefData = {
-      brief,
-      useCase,
-      referenceLinks: referenceLinks.split("\n").filter((link) => link.trim()),
-      selectedExample: selectedExample?.id,
+  const handleGenerate = async () => {
+    // Convert current prompt to prototype format
+    const prototypeData: PrototypePromptData = {
+      global: prompt.global,
+      negativeGlobal: prompt.negativeGlobal,
+      instruments: prompt.instruments.map(inst => ({
+        id: inst.id,
+        name: inst.name,
+        description: inst.description,
+        negativeDescription: inst.negativeDescription
+      })),
+      sections: prompt.sections.map(sec => ({
+        id: sec.id,
+        type: sec.type,
+        description: sec.description,
+        negativeDescription: sec.negativeDescription
+      }))
     };
-    localStorage.setItem("briefData", JSON.stringify(briefData));
+
+    // Initialize notes (could be empty or pre-filled for prototype)
+    const notes: PrototypeEvaluationNotes = {
+      global: '',
+      instruments: {},
+      sections: {}
+    };
+
+    // Initialize the prototype store with v1
+    initializeV1(prototypeData, notes);
+
+    // Simulate generation delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Navigate to evaluation page
     router.push("/prompt-review");
   };
 
+  const isValid =
+    prompt.global.length > 0 &&
+    prompt.instruments.length > 0 &&
+    prompt.sections.length > 0;
+
+  const masterPrompt = getMasterPrompt();
+
   return (
-    <div className="flex min-h-screen">
-      <SoundLibrarySidebar onSelectExample={handleSelectExample} />
-      <div className="flex-1 px-4 py-12 overflow-auto">
-        <div className="container mx-auto max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">New Audio Request</h1>
-        <p className="text-gray-600">
-          Describe what you need and we'll generate the perfect audio track
-        </p>
-      </div>
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <PromptLibrarySidebar onSelectPrompt={handleSelectPrompt} />
 
-      {selectedExample && (
-        <Alert className="mb-6 border-purple-200 bg-purple-50/50">
-          <Lightbulb className="h-4 w-4 text-purple-600" />
-          <AlertDescription>
-            Using "{selectedExample.title}" as reference. The brief has been pre-filled with this example's characteristics.
-            You can edit it as needed.
-          </AlertDescription>
-        </Alert>
-      )}
+      <div className="flex-1 px-6 py-12 overflow-auto min-w-0">
+        <div className="container mx-auto max-w-5xl">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <Sparkles className="h-8 w-8 text-purple-600" />
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                AI Audio Generation
+              </h1>
+            </div>
+            <p className="text-gray-600 text-lg">
+              Type naturally and let AI detect musical terms automatically
+            </p>
+          </div>
 
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Creative Brief</CardTitle>
-            <CardDescription>
-              Tell us about your project and audio requirements
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <label htmlFor="brief" className="text-sm font-medium">
-                Brief Description <span className="text-red-500">*</span>
-              </label>
-              <Textarea
-                id="brief"
-                placeholder="e.g., Need Japanese city pop track for lifestyle brand video, 2 minutes, upbeat nostalgic vibe, smooth and sophisticated..."
-                value={brief}
-                onChange={(e) => setBrief(e.target.value)}
-                className="min-h-[200px] resize-none"
-                required
-              />
-              <p className="text-xs text-gray-500">
-                Be as specific as possible about mood, style, instrumentation, and intended use
-              </p>
+          {selectedPrompt && (
+            <Alert className="mb-6 border-indigo-200 bg-indigo-50/50">
+              <Lightbulb className="h-4 w-4 text-indigo-600" />
+              <AlertDescription>
+                Applied "{selectedPrompt.name}" template to {selectedPrompt.category} settings.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <div className="space-y-6">
+            {/* Tier 1: Global Settings */}
+            <TextGlobalSettings />
+
+            {/* Tier 2: Instruments */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Instruments
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    Add instruments and describe their sound characteristics
+                  </p>
+                </div>
+                <Button
+                  onClick={addInstrument}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Instrument
+                </Button>
+              </div>
+
+              {prompt.instruments.length === 0 && (
+                <Alert>
+                  <AlertDescription>
+                    Click "Add Instrument" to start building your instrument palette.
+                    Each instrument can have its own unique timbre, effects, and characteristics.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {prompt.instruments.map((instrument) => (
+                <TextInstrumentCard
+                  key={instrument.id}
+                  instrument={instrument}
+                  onUpdate={(updates) => updateInstrument(instrument.id, updates)}
+                  onRemove={() => removeInstrument(instrument.id)}
+                  showWarning={prompt.instruments.length > 8}
+                />
+              ))}
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="use-case" className="text-sm font-medium">
-                Use Case (Optional)
-              </label>
-              <Select value={useCase} onValueChange={setUseCase}>
-                <SelectTrigger id="use-case">
-                  <SelectValue placeholder="Select use case" />
-                </SelectTrigger>
-                <SelectContent>
-                  {useCaseOptions.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Tier 3: Sections */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Sections
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    Define how each part of your track should sound
+                  </p>
+                </div>
+                <Button
+                  onClick={addSection}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Section
+                </Button>
+              </div>
+
+              {prompt.sections.length === 0 && (
+                <Alert>
+                  <AlertDescription>
+                    Click "Add Section" to define the structure of your track.
+                    Describe what happens in each section (Intro, Verse, Chorus, etc.).
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {prompt.sections.map((section) => (
+                <TextSectionCard
+                  key={section.id}
+                  section={section}
+                  onUpdate={(updates) => updateSection(section.id, updates)}
+                  onRemove={() => removeSection(section.id)}
+                />
+              ))}
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="reference-links" className="text-sm font-medium">
-                Reference Links (Optional)
-              </label>
-              <Textarea
-                id="reference-links"
-                placeholder="Paste reference URLs (one per line)"
-                value={referenceLinks}
-                onChange={(e) => setReferenceLinks(e.target.value)}
-                className="min-h-[100px] resize-none"
-              />
-              <p className="text-xs text-gray-500">
-                Links to tracks with similar style or vibe
-              </p>
-            </div>
+            {/* Preview Section */}
+            {isValid && (
+              <div className="pt-6 border-t">
+                <Button
+                  onClick={() => setShowPreview(!showPreview)}
+                  variant="outline"
+                  className="w-full mb-4"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  {showPreview ? "Hide" : "Show"} Master Prompt Preview
+                </Button>
 
-            <div className="pt-4">
+                {showPreview && (
+                  <div className="bg-gray-900 text-gray-100 p-6 rounded-lg font-mono text-sm whitespace-pre-wrap">
+                    {masterPrompt}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Generate Button */}
+            <div className="pt-6">
               <Button
-                type="submit"
-                className="w-full bg-purple-600 hover:bg-purple-700"
+                onClick={handleGenerate}
+                disabled={!isValid}
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-lg py-6 shadow-lg"
                 size="lg"
-                disabled={!brief.trim()}
               >
-                Continue to Prompt Review
+                {!isValid && (
+                  <span className="text-sm font-normal mr-2">
+                    (Complete all tiers to continue)
+                  </span>
+                )}
+                Generate Audio →
               </Button>
+              {!isValid && (
+                <div className="mt-3 text-sm text-gray-600 space-y-1">
+                  <p className="font-medium">Required to continue:</p>
+                  <ul className="list-disc list-inside space-y-0.5 ml-2">
+                    {prompt.global.length === 0 && (
+                      <li>Add a description in Global Settings</li>
+                    )}
+                    {prompt.instruments.length === 0 && (
+                      <li>Add at least one instrument</li>
+                    )}
+                    {prompt.sections.length === 0 && (
+                      <li>Add at least one section</li>
+                    )}
+                  </ul>
+                </div>
+              )}
             </div>
-          </CardContent>
-        </Card>
-      </form>
+          </div>
         </div>
       </div>
+
+      <GlossarySidebar />
     </div>
   );
 }

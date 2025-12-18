@@ -1,0 +1,2019 @@
+                                                                                
+ * ▐▛███▜▌ *   Claude Code v2.0.72                                              
+* ▝▜█████▛▘ *  Sonnet 4.5 · Claude Pro                                          
+ *  ▘▘ ▝▝  *   ~/ai-audio-gen                                                   
+                                                                                
+> I need an update prompt button for each global, section & insturument>        
+                                                                                
+move buttons underneath text area for both original prompt & eval               
+                                                                                
+add versioning to each section, global & instrument                             
+                                                                                
+< v1 >                                                                          
+                                                                                
+make it small                                                                   
+                                                                                
+⏺ I'll help you add update prompt buttons, move buttons underneath textareas,   
+  and add versioning. Let me first read the relevant component files to         
+  understand the current structure.                                             
+                                                                                
+⏺ Read(components/text-global-settings.tsx)                                     
+  ⎿  Read 236 lines                                                             
+                                                                                
+⏺ Read(components/text-section-card.tsx)                                        
+  ⎿  Read 119 lines                                                             
+                                                                                
+⏺ Read(components/text-instrument-card.tsx)                                     
+  ⎿  Read 104 lines                                                             
+                                                                                
+⏺ Read(components/prompt-eval-row.tsx)                                          
+  ⎿  Read 327 lines                                                             
+                                                                                
+⏺ Let me check the store structure to understand how to implement versioning:   
+                                                                                
+⏺ Read(lib/store/text-prompt-store.ts)                                          
+  ⎿  Read 150 lines                                                             
+                                                                                
+⏺ Now I'll update the store to add version tracking:                            
+                                                                                
+⏺ Update(lib/store/text-prompt-store.ts)                                        
+  ⎿  Added 3 lines                                                              
+        4      id: string;                                                      
+        5      name: string;                                                    
+        6      description: string;                                             
+        7 +    version: number;                                                 
+        8    }                                                                  
+        9                                                                       
+       10    export interface TextSection {                                     
+       11      id: string;                                                      
+       12      type: string;                                                    
+       13      description: string;                                             
+       14 +    version: number;                                                 
+       15    }                                                                  
+       16                                                                       
+       17    export interface TextPrompt {                                      
+       18      global: string;                                                  
+       19 +    globalVersion: number;                                           
+       20      instruments: TextInstrument[];                                   
+       21      sections: TextSection[];                                         
+       22    }                                                                  
+                                                                                
+⏺ Update(lib/store/text-prompt-store.ts)                                        
+  ⎿  Added 3 lines                                                              
+       26                                                                       
+       27      // Global actions                                                
+       28      setGlobal: (text: string) => void;                               
+       29 +    updateGlobalPrompt: () => void;                                  
+       30                                                                       
+       31      // Instrument actions                                            
+       32      addInstrument: () => string;                                     
+       33      updateInstrument: (id: string, updates:                          
+            Partial<TextInstrument>) => void;                                   
+       34 +    updateInstrumentPrompt: (id: string) => void;                    
+       35      removeInstrument: (id: string) => void;                          
+       36                                                                       
+       37      // Section actions                                               
+       38      addSection: () => string;                                        
+       39      updateSection: (id: string, updates: Partial<TextSection>)       
+             => void;                                                           
+       40 +    updateSectionPrompt: (id: string) => void;                       
+       41      removeSection: (id: string) => void;                             
+       42                                                                       
+       43      // Utility                                                       
+                                                                                
+⏺ Update(lib/store/text-prompt-store.ts)                                        
+  ⎿  Added 1 line                                                               
+       49                                                                       
+       50    const initialState: TextPrompt = {                                 
+       51      global: '',                                                      
+       52 +    globalVersion: 1,                                                
+       53      instruments: [],                                                 
+       54      sections: [],                                                    
+       55    };                                                                 
+                                                                                
+⏺ Update(lib/store/text-prompt-store.ts)                                        
+  ⎿  Added 27 lines, removed 2 lines                                            
+       62          prompt: { ...state.prompt, global: text }                    
+       63        })),                                                           
+       64                                                                       
+       65 +    updateGlobalPrompt: () =>                                        
+       66 +      set((state) => ({                                              
+       67 +        prompt: { ...state.prompt, globalVersion:                    
+          + state.prompt.globalVersion + 1 }                                    
+       68 +      })),                                                           
+       69 +                                                                     
+       70      addInstrument: () => {                                           
+       71        const id = generateId();                                       
+       72        set((state) => ({                                              
+     ...                                                                        
+       69            ...state.prompt,                                           
+       70            instruments: [                                             
+       71              ...state.prompt.instruments,                             
+       72 -            { id, name: '', description: '' }                        
+       72 +            { id, name: '', description: '', version: 1 }            
+       73            ]                                                          
+       74          }                                                            
+       75        }));                                                           
+     ...                                                                        
+        86          }                                                           
+        87        })),                                                          
+        88                                                                      
+        89 +    updateInstrumentPrompt: (id) =>                                 
+        90 +      set((state) => ({                                             
+        91 +        prompt: {                                                   
+        92 +          ...state.prompt,                                          
+        93 +          instruments: state.prompt.instruments.map((inst) =>       
+        94 +            inst.id === id ? { ...inst, version: inst.version       
+           +  + 1 } : inst                                                      
+        95 +          )                                                         
+        96 +        }                                                           
+        97 +      })),                                                          
+        98 +                                                                    
+        99      removeInstrument: (id) =>                                       
+       100        set((state) => ({                                             
+       101          prompt: {                                                   
+     ...                                                                        
+       101            ...state.prompt,                                          
+       102            sections: [                                               
+       103              ...state.prompt.sections,                               
+       104 -            { id, type: 'Verse', description: '' }                  
+       104 +            { id, type: 'Verse', description: '', version: 1        
+           +  }                                                                 
+       105            ]                                                         
+       106          }                                                           
+       107        }));                                                          
+     ...                                                                        
+       118          }                                                           
+       119        })),                                                          
+       120                                                                      
+       121 +    updateSectionPrompt: (id) =>                                    
+       122 +      set((state) => ({                                             
+       123 +        prompt: {                                                   
+       124 +          ...state.prompt,                                          
+       125 +          sections: state.prompt.sections.map((section) =>          
+       126 +            section.id === id ? { ...section, version:              
+           + section.version + 1 } : section                                    
+       127 +          )                                                         
+       128 +        }                                                           
+       129 +      })),                                                          
+       130 +                                                                    
+       131      removeSection: (id) =>                                          
+       132        set((state) => ({                                             
+       133          prompt: {                                                   
+                                                                                
+⏺ Now I'll update the global settings component to add version display and      
+  Update Prompt button:                                                         
+                                                                                
+⏺ Update(components/text-global-settings.tsx)                                   
+  ⎿  Added 2 lines, removed 1 line                                              
+        8      SelectTrigger,                                                   
+        9      SelectValue,                                                     
+       10    } from "@/components/ui/select";                                   
+       11 +  import { Button } from "@/components/ui/button";                   
+       12    import { SmartTextArea } from "./smart-textarea";                  
+       13    import { useTextPromptStore } from                                 
+            "@/lib/store/text-prompt-store";                                    
+       14 -  import { Music2 } from "lucide-react";                             
+       14 +  import { Music2, RefreshCw } from "lucide-react";                  
+       15                                                                       
+       16    const GENRE_OPTIONS = [                                            
+       17      "Pop",                                                           
+                                                                                
+⏺ Update(components/text-global-settings.tsx)                                   
+  ⎿  Added 5 lines, removed 1 line                                              
+       83    ];                                                                 
+       84                                                                       
+       85    export function TextGlobalSettings() {                             
+       86 -    const { prompt, setGlobal } = useTextPromptStore();              
+       86 +    const { prompt, setGlobal, updateGlobalPrompt                    
+          +  } = useTextPromptStore();                                          
+       87                                                                       
+       88      const insertAtCursor = (text: string) => {                       
+       89        const currentValue = prompt.global;                            
+     ...                                                                        
+        95        insertAtCursor(value);                                        
+        96      };                                                              
+        97                                                                      
+        98 +    const handleUpdatePrompt = () => {                              
+        99 +      updateGlobalPrompt();                                         
+       100 +    };                                                              
+       101 +                                                                    
+       102      return (                                                        
+       103        <Card className="border-purple-200 bg-gradient-to-br          
+             from-purple-50/50 to-pink-50/50">                                  
+       104          <CardHeader className="pb-4">                               
+                                                                                
+⏺ Update(components/text-global-settings.tsx)                                   
+  ⎿  Added 8 lines, removed 3 lines                                             
+       107                <Music2 className="h-4 w-4 text-white" />             
+       108              </div>                                                  
+       109              <div className="flex-1">                                
+       110 -              <CardTitle className="text-lg font-bold               
+           - text-purple-900">                                                  
+       111 -                Global Settings                                     
+       112 -              </CardTitle>                                          
+       110 +              <div className="flex items-center gap-2">             
+       111 +                <CardTitle className="text-lg font-bold             
+           + text-purple-900">                                                  
+       112 +                  Global Settings                                   
+       113 +                </CardTitle>                                        
+       114 +                <span className="text-xs text-gray-500              
+           + font-mono">                                                        
+       115 +                  &lt; v{prompt.globalVersion} &gt;                 
+       116 +                </span>                                             
+       117 +              </div>                                                
+       118                <p className="text-xs text-gray-600 mt-0.5">          
+       119                  Describe the overall track characteristics          
+       120                </p>                                                  
+                                                                                
+⏺ Update(components/text-global-settings.tsx)                                   
+  ⎿  Added 8 lines                                                              
+       232                placeholder="e.g., a neo-soul track with              
+             uplifting vocals and lazy swing drums..."                          
+       233                minRows={4}                                           
+       234              />                                                      
+       235 +            <Button                                                 
+       236 +              onClick={handleUpdatePrompt}                          
+       237 +              size="sm"                                             
+       238 +              className="mt-2 h-8 text-xs bg-purple-600             
+           + hover:bg-purple-700"                                               
+       239 +            >                                                       
+       240 +              <RefreshCw className="h-3 w-3 mr-1.5" />              
+       241 +              Update Prompt                                         
+       242 +            </Button>                                               
+       243            </div>                                                    
+       244                                                                      
+       245            {/* Tip */}                                               
+                                                                                
+⏺ Now I'll update the section card component:                                   
+                                                                                
+⏺ Update(components/text-section-card.tsx)                                      
+  ⎿  Added 2 lines, removed 2 lines                                             
+       11    } from "@/components/ui/select";                                   
+       12    import { SmartTextArea } from "./smart-textarea";                  
+       13    import { HelperBadge } from "./helper-badge";                      
+       14 -  import { TextSection } from "@/lib/store/text-prompt-store";       
+       15 -  import { X } from "lucide-react";                                  
+       14 +  import { TextSection, useTextPromptStore                           
+          +  } from "@/lib/store/text-prompt-store";                            
+       15 +  import { X, RefreshCw } from "lucide-react";                       
+       16                                                                       
+       17    const SECTION_TYPES = [                                            
+       18      "Intro",                                                         
+                                                                                
+⏺ Update(components/text-section-card.tsx)                                      
+  ⎿  Added 6 lines                                                              
+       38      onUpdate,                                                        
+       39      onRemove,                                                        
+       40    }: TextSectionCardProps) {                                         
+       41 +    const { updateSectionPrompt } = useTextPromptStore();            
+       42 +                                                                     
+       43      const insertAtCursor = (text: string) => {                       
+       44        const currentValue = section.description;                      
+       45        const newValue = currentValue + (currentValue ? " " :          
+            "") + text;                                                         
+       46        onUpdate({ description: newValue });                           
+       47      };                                                               
+       48                                                                       
+       49 +    const handleUpdatePrompt = () => {                               
+       50 +      updateSectionPrompt(section.id);                               
+       51 +    };                                                               
+       52 +                                                                     
+       53      return (                                                         
+       54        <Card className="border-green-200 bg-gradient-to-br            
+            from-green-50/50 to-emerald-50/50">                                 
+       55          <CardHeader className="pb-3">                                
+                                                                                
+⏺ Update(components/text-section-card.tsx)                                      
+  ⎿  Added 8 lines, removed 3 lines                                             
+       55          <CardHeader className="pb-3">                                
+       56            <div className="flex items-center gap-2">                  
+       57              <div className="flex-1">                                 
+       58 -              <label className="text-xs font-medium                  
+          - text-gray-700 mb-1.5 block">                                        
+       59 -                Section Type                                         
+       60 -              </label>                                               
+       58 +              <div className="flex items-center gap-2 mb-1.5">       
+       59 +                <label className="text-xs font-medium                
+          + text-gray-700">                                                     
+       60 +                  Section Type                                       
+       61 +                </label>                                             
+       62 +                <span className="text-xs text-gray-500               
+          + font-mono">                                                         
+       63 +                  &lt; v{section.version} &gt;                       
+       64 +                </span>                                              
+       65 +              </div>                                                 
+       66                <Select                                                
+       67                  value={section.type}                                 
+       68                  onValueChange={(value) => onUpdate({ type:           
+            value })}                                                           
+                                                                                
+⏺ Update(components/text-section-card.tsx)                                      
+  ⎿  Added 8 lines                                                              
+       102                placeholder="e.g., vocals and keys only, rubato       
+              feel, intimate female vocal, melancholic delivery..."             
+       103                minRows={3}                                           
+       104              />                                                      
+       105 +            <Button                                                 
+       106 +              onClick={handleUpdatePrompt}                          
+       107 +              size="sm"                                             
+       108 +              className="mt-2 h-8 text-xs bg-green-600              
+           + hover:bg-green-700"                                                
+       109 +            >                                                       
+       110 +              <RefreshCw className="h-3 w-3 mr-1.5" />              
+       111 +              Update Prompt                                         
+       112 +            </Button>                                               
+       113            </div>                                                    
+       114                                                                      
+       115            {/* Helper Badges */}                                     
+                                                                                
+⏺ Now I'll update the instrument card component:                                
+                                                                                
+⏺ Update(components/text-instrument-card.tsx)                                   
+  ⎿  Added 2 lines, removed 2 lines                                             
+        6    import { Alert, AlertDescription } from                            
+            "@/components/ui/alert";                                            
+        7    import { SmartTextArea } from "./smart-textarea";                  
+        8    import { HelperBadge } from "./helper-badge";                      
+        9 -  import { TextInstrument                                            
+          -  } from "@/lib/store/text-prompt-store";                            
+       10 -  import { X, AlertTriangle } from "lucide-react";                   
+        9 +  import { TextInstrument, useTextPromptStore                        
+          +  } from "@/lib/store/text-prompt-store";                            
+       10 +  import { X, AlertTriangle, RefreshCw } from "lucide-react";        
+       11                                                                       
+       12    interface TextInstrumentCardProps {                                
+       13      instrument: TextInstrument;                                      
+                                                                                
+⏺ Update(components/text-instrument-card.tsx)                                   
+  ⎿  Added 6 lines                                                              
+       22      onRemove,                                                        
+       23      showWarning = false,                                             
+       24    }: TextInstrumentCardProps) {                                      
+       25 +    const { updateInstrumentPrompt } = useTextPromptStore();         
+       26 +                                                                     
+       27      const insertAtCursor = (text: string) => {                       
+       28        const currentValue = instrument.description;                   
+       29        const newValue = currentValue + (currentValue ? " " :          
+            "") + text;                                                         
+       30        onUpdate({ description: newValue });                           
+       31      };                                                               
+       32                                                                       
+       33 +    const handleUpdatePrompt = () => {                               
+       34 +      updateInstrumentPrompt(instrument.id);                         
+       35 +    };                                                               
+       36 +                                                                     
+       37      return (                                                         
+       38        <Card className="border-blue-200 bg-gradient-to-br             
+            from-blue-50/50 to-cyan-50/50">                                     
+       39          <CardHeader className="pb-3">                                
+                                                                                
+⏺ Update(components/text-instrument-card.tsx)                                   
+  ⎿  Added 15 lines, removed 7 lines                                            
+       38        <Card className="border-blue-200 bg-gradient-to-br             
+            from-blue-50/50 to-cyan-50/50">                                     
+       39          <CardHeader className="pb-3">                                
+       40            <div className="flex items-center gap-2">                  
+       41 -            <Input                                                   
+       42 -              value={instrument.name}                                
+       43 -              onChange={(e) => onUpdate({ name: e.target.value       
+          -  })}                                                                
+       44 -              placeholder="Instrument name (e.g., Bass, Drums,       
+          -  Keys)"                                                             
+       45 -              className="flex-1 font-semibold text-blue-900          
+          - bg-white/50"                                                        
+       46 -            />                                                       
+       41 +            <div className="flex-1 space-y-1">                       
+       42 +              <div className="flex items-center gap-2">              
+       43 +                <span className="text-xs font-medium                 
+          + text-gray-700">Instrument</span>                                    
+       44 +                <span className="text-xs text-gray-500               
+          + font-mono">                                                         
+       45 +                  &lt; v{instrument.version} &gt;                    
+       46 +                </span>                                              
+       47 +              </div>                                                 
+       48 +              <Input                                                 
+       49 +                value={instrument.name}                              
+       50 +                onChange={(e) => onUpdate({ name:                    
+          + e.target.value })}                                                  
+       51 +                placeholder="Instrument name (e.g., Bass,            
+          + Drums, Keys)"                                                       
+       52 +                className="font-semibold text-blue-900               
+          + bg-white/50"                                                        
+       53 +              />                                                     
+       54 +            </div>                                                   
+       55              <Button                                                  
+       56                variant="ghost"                                        
+       57                size="icon"                                            
+       58                onClick={onRemove}                                     
+       59 -              className="h-8 w-8 text-gray-500                       
+          -  hover:text-red-600 hover:bg-red-50"                                
+       59 +              className="h-8 w-8 text-gray-500                       
+          +  hover:text-red-600 hover:bg-red-50 mt-6"                           
+       60              >                                                        
+       61                <X className="h-4 w-4" />                              
+       62              </Button>                                                
+                                                                                
+⏺ Update(components/text-instrument-card.tsx)                                   
+  ⎿  Added 8 lines                                                              
+       85                placeholder="e.g., analog moog bass with               
+            distortion and heavy saturation, compressed with slight             
+            reverb..."                                                          
+       86                minRows={3}                                            
+       87              />                                                       
+       88 +            <Button                                                  
+       89 +              onClick={handleUpdatePrompt}                           
+       90 +              size="sm"                                              
+       91 +              className="mt-2 h-8 text-xs bg-blue-600                
+          + hover:bg-blue-700"                                                  
+       92 +            >                                                        
+       93 +              <RefreshCw className="h-3 w-3 mr-1.5" />               
+       94 +              Update Prompt                                          
+       95 +            </Button>                                                
+       96            </div>                                                     
+       97                                                                       
+       98            {/* Helper Badges */}                                      
+                                                                                
+⏺ Now I'll update the prompt-eval-row.tsx to move the Generate buttons below the
+   textareas. Let me start with the GlobalPromptEvalRow:                        
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 23 lines, removed 24 lines                                           
+       25        <div className="grid grid-cols-2 gap-6 p-4                     
+            bg-purple-50/50 rounded-lg border border-purple-200">               
+       26          {/* Left: Prompt Display */}                                 
+       27          <div className="space-y-3">                                  
+       28 -          <div className="flex items-center justify-between">        
+       29 -            <h3 className="text-sm font-semibold                     
+          - text-purple-900">Global Settings</h3>                               
+       30 -            {onGenerate && (                                         
+       31 -              <Button                                                
+       32 -                size="sm"                                            
+       33 -                variant="outline"                                    
+       34 -                onClick={onGenerate}                                 
+       35 -                disabled={!hasNote || isGenerating}                  
+       36 -                className="h-7 text-xs bg-purple-600                 
+          - text-white hover:bg-purple-700 border-purple-600"                   
+       37 -              >                                                      
+       38 -                {isGenerating ? (                                    
+       39 -                  <>                                                 
+       40 -                    <Loader2 className="h-3 w-3 mr-1                 
+          - animate-spin" />                                                    
+       41 -                    Generating Full Song...                          
+       42 -                  </>                                                
+       43 -                ) : (                                                
+       44 -                  <>                                                 
+       45 -                    <Sparkles className="h-3 w-3 mr-1" />            
+       46 -                    Generate                                         
+       47 -                  </>                                                
+       48 -                )}                                                   
+       49 -              </Button>                                              
+       50 -            )}                                                       
+       51 -          </div>                                                     
+       28 +          <h3 className="text-sm font-semibold                       
+          + text-purple-900">Global Settings</h3>                               
+       29                                                                       
+       30            {/* Initial Prompt Text */}                                
+       31            <Textarea                                                  
+     ...                                                                        
+       57              className="min-h-[100px] text-sm resize-none             
+            bg-white/80 text-gray-700"                                          
+       58            />                                                         
+       59                                                                       
+       60 +          {onGenerate && (                                           
+       61 +            <Button                                                  
+       62 +              size="sm"                                              
+       63 +              variant="outline"                                      
+       64 +              onClick={onGenerate}                                   
+       65 +              disabled={!hasNote || isGenerating}                    
+       66 +              className="h-7 text-xs bg-purple-600 text-white        
+          + hover:bg-purple-700 border-purple-600"                              
+       67 +            >                                                        
+       68 +              {isGenerating ? (                                      
+       69 +                <>                                                   
+       70 +                  <Loader2 className="h-3 w-3 mr-1                   
+          + animate-spin" />                                                    
+       71 +                  Generating Full Song...                            
+       72 +                </>                                                  
+       73 +              ) : (                                                  
+       74 +                <>                                                   
+       75 +                  <Sparkles className="h-3 w-3 mr-1" />              
+       76 +                  Generate                                           
+       77 +                </>                                                  
+       78 +              )}                                                     
+       79 +            </Button>                                                
+       80 +          )}                                                         
+       81 +                                                                     
+       82            {/* Musical Phrases as Badges */}                          
+       83            <div className="space-y-1.5">                              
+       84              {prompt.global_settings.genre.length > 0 && (            
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 23 lines, removed 24 lines                                           
+       126        <div className="grid grid-cols-2 gap-6 p-4                    
+             bg-blue-50/50 rounded-lg border border-blue-200">                  
+       127          {/* Left: Prompt Display */}                                
+       128          <div className="space-y-3">                                 
+       129 -          <div className="flex items-center justify-between">       
+       130 -            <h3 className="text-sm font-semibold                    
+           - text-blue-900">{instrument.name || "Unnamed"}</h3>                 
+       131 -            {onGenerate && (                                        
+       132 -              <Button                                               
+       133 -                size="sm"                                           
+       134 -                variant="outline"                                   
+       135 -                onClick={onGenerate}                                
+       136 -                disabled={!hasNote || isGenerating}                 
+       137 -                className="h-7 text-xs bg-blue-600 text-white       
+           -  hover:bg-blue-700 border-blue-600"                                
+       138 -              >                                                     
+       139 -                {isGenerating ? (                                   
+       140 -                  <>                                                
+       141 -                    <Loader2 className="h-3 w-3 mr-1                
+           - animate-spin" />                                                   
+       142 -                    Generating Full Song...                         
+       143 -                  </>                                               
+       144 -                ) : (                                               
+       145 -                  <>                                                
+       146 -                    <Sparkles className="h-3 w-3 mr-1" />           
+       147 -                    Generate                                        
+       148 -                  </>                                               
+       149 -                )}                                                  
+       150 -              </Button>                                             
+       151 -            )}                                                      
+       152 -          </div>                                                    
+       129 +          <h3 className="text-sm font-semibold                      
+           + text-blue-900">{instrument.name || "Unnamed"}</h3>                 
+       130                                                                      
+       131            {/* Initial Prompt Text */}                               
+       132            <Textarea                                                 
+     ...                                                                        
+       158              className="min-h-[80px] text-sm resize-none             
+             bg-white/80 text-gray-700"                                         
+       159            />                                                        
+       160                                                                      
+       161 +          {onGenerate && (                                          
+       162 +            <Button                                                 
+       163 +              size="sm"                                             
+       164 +              variant="outline"                                     
+       165 +              onClick={onGenerate}                                  
+       166 +              disabled={!hasNote || isGenerating}                   
+       167 +              className="h-7 text-xs bg-blue-600 text-white         
+           + hover:bg-blue-700 border-blue-600"                                 
+       168 +            >                                                       
+       169 +              {isGenerating ? (                                     
+       170 +                <>                                                  
+       171 +                  <Loader2 className="h-3 w-3 mr-1                  
+           + animate-spin" />                                                   
+       172 +                  Generating Full Song...                           
+       173 +                </>                                                 
+       174 +              ) : (                                                 
+       175 +                <>                                                  
+       176 +                  <Sparkles className="h-3 w-3 mr-1" />             
+       177 +                  Generate                                          
+       178 +                </>                                                 
+       179 +              )}                                                    
+       180 +            </Button>                                               
+       181 +          )}                                                        
+       182 +                                                                    
+       183            {/* Musical Phrases as Badges */}                         
+       184            <div className="space-y-1.5">                             
+       185              {instrument.timbre.length > 0 && (                      
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 23 lines, removed 24 lines                                           
+       257        <div className="grid grid-cols-2 gap-6 p-4                    
+             bg-green-50/50 rounded-lg border border-green-200">                
+       258          {/* Left: Prompt Display */}                                
+       259          <div className="space-y-3">                                 
+       260 -          <div className="flex items-center justify-between">       
+       261 -            <h3 className="text-sm font-semibold                    
+           - text-green-900">{section.type}</h3>                                
+       262 -            {onGenerate && (                                        
+       263 -              <Button                                               
+       264 -                size="sm"                                           
+       265 -                variant="outline"                                   
+       266 -                onClick={onGenerate}                                
+       267 -                disabled={!hasNote || isGenerating}                 
+       268 -                className="h-7 text-xs bg-green-600                 
+           - text-white hover:bg-green-700 border-green-600"                    
+       269 -              >                                                     
+       270 -                {isGenerating ? (                                   
+       271 -                  <>                                                
+       272 -                    <Loader2 className="h-3 w-3 mr-1                
+           - animate-spin" />                                                   
+       273 -                    Generating Section...                           
+       274 -                  </>                                               
+       275 -                ) : (                                               
+       276 -                  <>                                                
+       277 -                    <Sparkles className="h-3 w-3 mr-1" />           
+       278 -                    Generate                                        
+       279 -                  </>                                               
+       280 -                )}                                                  
+       281 -              </Button>                                             
+       282 -            )}                                                      
+       283 -          </div>                                                    
+       260 +          <h3 className="text-sm font-semibold                      
+           + text-green-900">{section.type}</h3>                                
+       261                                                                      
+       262            {/* Initial Prompt Text */}                               
+       263            <Textarea                                                 
+     ...                                                                        
+       289              className="min-h-[100px] text-sm resize-none            
+             bg-white/80 text-gray-700"                                         
+       290            />                                                        
+       291                                                                      
+       292 +          {onGenerate && (                                          
+       293 +            <Button                                                 
+       294 +              size="sm"                                             
+       295 +              variant="outline"                                     
+       296 +              onClick={onGenerate}                                  
+       297 +              disabled={!hasNote || isGenerating}                   
+       298 +              className="h-7 text-xs bg-green-600 text-white        
+           + hover:bg-green-700 border-green-600"                               
+       299 +            >                                                       
+       300 +              {isGenerating ? (                                     
+       301 +                <>                                                  
+       302 +                  <Loader2 className="h-3 w-3 mr-1                  
+           + animate-spin" />                                                   
+       303 +                  Generating Section...                             
+       304 +                </>                                                 
+       305 +              ) : (                                                 
+       306 +                <>                                                  
+       307 +                  <Sparkles className="h-3 w-3 mr-1" />             
+       308 +                  Generate                                          
+       309 +                </>                                                 
+       310 +              )}                                                    
+       311 +            </Button>                                               
+       312 +          )}                                                        
+       313 +                                                                    
+       314            {/* Musical Phrases as Badges */}                         
+       315            <div className="space-y-1.5">                             
+       316              {allExpressions.length > 0 && (                         
+                                                                                
+⏺ All done! I've implemented all the requested changes:                         
+                                                                                
+  Changes Made:                                                                 
+                                                                                
+  1. Store Updates (lib/store/text-prompt-store.ts:7)                           
+                                                                                
+  - Added version field to TextInstrument and TextSection interfaces            
+  - Added globalVersion field to TextPrompt interface                           
+  - Added update actions: updateGlobalPrompt(), updateInstrumentPrompt(id),     
+  updateSectionPrompt(id)                                                       
+  - All new items start at version 1, and versions increment when Update Prompt 
+  is clicked                                                                    
+                                                                                
+  2. Global Settings (components/text-global-settings.tsx:114)                  
+                                                                                
+  - Added small version display < v1 > next to "Global Settings" title          
+  - Added "Update Prompt" button underneath the textarea with purple styling    
+                                                                                
+  3. Section Cards (components/text-section-card.tsx:62)                        
+                                                                                
+  - Added small version display < v{section.version} > next to "Section Type"   
+  label                                                                         
+  - Added "Update Prompt" button underneath the textarea with green styling     
+                                                                                
+  4. Instrument Cards (components/text-instrument-card.tsx:44)                  
+                                                                                
+  - Added small version display < v{instrument.version} > next to "Instrument"  
+  label                                                                         
+  - Added "Update Prompt" button underneath the textarea with blue styling      
+                                                                                
+  5. Prompt Evaluation Rows (components/prompt-eval-row.tsx)                    
+                                                                                
+  - Moved Generate buttons from the header to underneath the textarea for:      
+    - GlobalPromptEvalRow (line 37)                                             
+    - InstrumentPromptEvalRow (line 138)                                        
+    - SectionPromptEvalRow (line 269)                                           
+                                                                                
+  The version numbers are displayed in a small, monospace font (< v1 >) and     
+  increment each time the corresponding "Update Prompt" button is clicked. All  
+  buttons use the RefreshCw icon and match the color scheme of their respective 
+  sections (purple for global, green for sections, blue for instruments).       
+                                                                                
+> i cannot see < v1 > on the eval page global, inst or section elements         
+                                                                                
+⏺ You're right! I need to add the version displays to the prompt-eval-row.tsx   
+  components as well. Let me add those now:                                     
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 6 lines, removed 1 line                                              
+       25        <div className="grid grid-cols-2 gap-6 p-4                     
+            bg-purple-50/50 rounded-lg border border-purple-200">               
+       26          {/* Left: Prompt Display */}                                 
+       27          <div className="space-y-3">                                  
+       28 -          <h3 className="text-sm font-semibold                       
+          - text-purple-900">Global Settings</h3>                               
+       28 +          <div className="flex items-center gap-2">                  
+       29 +            <h3 className="text-sm font-semibold                     
+          + text-purple-900">Global Settings</h3>                               
+       30 +            <span className="text-xs text-gray-500 font-mono">       
+       31 +              &lt; v{prompt.global_settings.version || 1} &gt;       
+       32 +            </span>                                                  
+       33 +          </div>                                                     
+       34                                                                       
+       35            {/* Initial Prompt Text */}                                
+       36            <Textarea                                                  
+                                                                                
+⏺ Let me check the types structure to see which version field to use:           
+                                                                                
+⏺ Read(lib/types.ts)                                                            
+  ⎿  Read 100 lines                                                             
+  ⎿  Found 1 new diagnostic issue in 1 file (ctrl+o to expand)                  
+                                                                                
+⏺ Read(lib/types.ts)                                                            
+  ⎿  Read 185 lines                                                             
+                                                                                
+⏺ I see the issue - the eval page uses a different type system                  
+  (ThreeTierPrompt). I need to add version fields to those types as well:       
+                                                                                
+⏺ Update(lib/types.ts)                                                          
+  ⎿  Added 1 line                                                               
+       115        named: string;                                                
+       116      };                                                              
+       117      mood: string[];                                                 
+       118 +    version: number;                                                
+       119    }                                                                 
+       120                                                                      
+       121    export interface Instrument {                                     
+                                                                                
+⏺ Update(lib/types.ts)                                                          
+  ⎿  Added 1 line                                                               
+       124      timbre: string[];                                               
+       125      effects: Effect[];                                              
+       126      vocal_techniques?: string[];                                    
+       127 +    version: number;                                                
+       128    }                                                                 
+       129                                                                      
+       130    export interface PerformanceStyle {                               
+                                                                                
+⏺ Update(lib/types.ts)                                                          
+  ⎿  Added 1 line                                                               
+       138      type: string;                                                   
+       139      included_instrument_ids: string[];                              
+       140      performance: Record<string, PerformanceStyle>;                  
+       141 +    version: number;                                                
+       142    }                                                                 
+       143                                                                      
+       144    export interface ThreeTierPrompt {                                
+                                                                                
+⏺ Now let me update the InstrumentPromptEvalRow to show the version:            
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 6 lines, removed 1 line                                              
+       131        <div className="grid grid-cols-2 gap-6 p-4                    
+             bg-blue-50/50 rounded-lg border border-blue-200">                  
+       132          {/* Left: Prompt Display */}                                
+       133          <div className="space-y-3">                                 
+       134 -          <h3 className="text-sm font-semibold                      
+           - text-blue-900">{instrument.name || "Unnamed"}</h3>                 
+       134 +          <div className="flex items-center gap-2">                 
+       135 +            <h3 className="text-sm font-semibold                    
+           + text-blue-900">{instrument.name || "Unnamed"}</h3>                 
+       136 +            <span className="text-xs text-gray-500                  
+           + font-mono">                                                        
+       137 +              &lt; v{instrument.version || 1} &gt;                  
+       138 +            </span>                                                 
+       139 +          </div>                                                    
+       140                                                                      
+       141            {/* Initial Prompt Text */}                               
+       142            <Textarea                                                 
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 6 lines, removed 1 line                                              
+       267        <div className="grid grid-cols-2 gap-6 p-4                    
+             bg-green-50/50 rounded-lg border border-green-200">                
+       268          {/* Left: Prompt Display */}                                
+       269          <div className="space-y-3">                                 
+       270 -          <h3 className="text-sm font-semibold                      
+           - text-green-900">{section.type}</h3>                                
+       270 +          <div className="flex items-center gap-2">                 
+       271 +            <h3 className="text-sm font-semibold                    
+           + text-green-900">{section.type}</h3>                                
+       272 +            <span className="text-xs text-gray-500                  
+           + font-mono">                                                        
+       273 +              &lt; v{section.version || 1} &gt;                     
+       274 +            </span>                                                 
+       275 +          </div>                                                    
+       276                                                                      
+       277            {/* Initial Prompt Text */}                               
+       278            <Textarea                                                 
+                                                                                
+⏺ Now let me check if there are any mock data files that need to be updated to  
+  include the version fields:                                                   
+                                                                                
+⏺ Search(pattern: "ThreeTierPrompt")                                            
+  ⎿  Found 12 files (ctrl+o to expand)                                          
+                                                                                
+⏺ Search(pattern: "global_settings.*\{", path: "lib/store", output_mode:        
+        "content")                                                              
+  ⎿  Found 55 lines (ctrl+o to expand)                                          
+                                                                                
+⏺ Read(lib/store/prompt-store.ts)                                               
+  ⎿  Read 296 lines                                                             
+                                                                                
+⏺ Now I need to update the prompt store to initialize versions and add update   
+  methods:                                                                      
+                                                                                
+⏺ Update(lib/store/prompt-store.ts)                                             
+  ⎿  Added 3 lines                                                              
+        6                                                                       
+        7      // Global Settings actions                                       
+        8      updateGlobalSettings: (settings: Partial<GlobalSettings>)        
+            => void;                                                            
+        9 +    updateGlobalVersion: () => void;                                 
+       10      setGenres: (genres: string[]) => void;                           
+       11      setKey: (key: string) => void;                                   
+       12      setTimeSignature: (timeSignature: string) => void;               
+     ...                                                                        
+       16      addInstrument: () => void;                                       
+       17      removeInstrument: (id: string) => void;                          
+       18      updateInstrument: (id: string, updates:                          
+            Partial<Instrument>) => void;                                       
+       19 +    updateInstrumentVersion: (id: string) => void;                   
+       20      addEffect: (instrumentId: string, effect: Effect) => void;       
+       21      removeEffect: (instrumentId: string, effectType: string)         
+            => void;                                                            
+       22                                                                       
+     ...                                                                        
+       23      addSection: () => void;                                          
+       24      removeSection: (id: string) => void;                             
+       25      updateSection: (id: string, updates: Partial<Section>) =>        
+            void;                                                               
+       26 +    updateSectionVersion: (id: string) => void;                      
+       27      toggleInstrumentInSection: (sectionId: string,                   
+            instrumentId: string) => void;                                      
+       28      updateSectionPerformance: (sectionId: string,                    
+            instrumentId: string, performance: Partial<PerformanceStyle>)       
+             => void;                                                           
+       29                                                                       
+                                                                                
+⏺ Update(lib/store/prompt-store.ts)                                             
+  ⎿  Added 2 lines, removed 1 line                                              
+       45          bpm: 120,                                                    
+       46          named: 'Allegro'                                             
+       47        },                                                             
+       48 -      mood: []                                                       
+       48 +      mood: [],                                                      
+       49 +      version: 1                                                     
+       50      },                                                               
+       51      instruments: [],                                                 
+       52      sections: []                                                     
+                                                                                
+⏺ Update(lib/store/prompt-store.ts)                                             
+  ⎿  Added 11 lines                                                             
+       67          }                                                            
+       68        })),                                                           
+       69                                                                       
+       70 +    updateGlobalVersion: () =>                                       
+       71 +      set((state) => ({                                              
+       72 +        prompt: {                                                    
+       73 +          ...state.prompt,                                           
+       74 +          global_settings: {                                         
+       75 +            ...state.prompt.global_settings,                         
+       76 +            version: state.prompt.global_settings.version + 1        
+       77 +          }                                                          
+       78 +        }                                                            
+       79 +      })),                                                           
+       80 +                                                                     
+       81      setGenres: (genres) =>                                           
+       82        set((state) => ({                                              
+       83          prompt: {                                                    
+                                                                                
+⏺ Update(lib/store/prompt-store.ts)                                             
+  ⎿  Added 2 lines, removed 1 line                                              
+       144                id: generateId(),                                     
+       145                name: '',                                             
+       146                timbre: [],                                           
+       147 -              effects: []                                           
+       147 +              effects: [],                                          
+       148 +              version: 1                                            
+       149              }                                                       
+       150            ]                                                         
+       151          }                                                           
+                                                                                
+⏺ Update(lib/store/prompt-store.ts)                                             
+  ⎿  Added 10 lines                                                             
+       181          }                                                           
+       182        })),                                                          
+       183                                                                      
+       184 +    updateInstrumentVersion: (id) =>                                
+       185 +      set((state) => ({                                             
+       186 +        prompt: {                                                   
+       187 +          ...state.prompt,                                          
+       188 +          instruments: state.prompt.instruments.map((inst) =>       
+       189 +            inst.id === id ? { ...inst, version: inst.version       
+           +  + 1 } : inst                                                      
+       190 +          )                                                         
+       191 +        }                                                           
+       192 +      })),                                                          
+       193 +                                                                    
+       194      addEffect: (instrumentId, effect) =>                            
+       195        set((state) => ({                                             
+       196          prompt: {                                                   
+                                                                                
+⏺ Update(lib/store/prompt-store.ts)                                             
+  ⎿  Added 2 lines, removed 1 line                                              
+       229                id: generateId(),                                     
+       230                type: 'Verse',                                        
+       231                included_instrument_ids: [],                          
+       232 -              performance: {}                                       
+       232 +              performance: {},                                      
+       233 +              version: 1                                            
+       234              }                                                       
+       235            ]                                                         
+       236          }                                                           
+                                                                                
+⏺ Update(lib/store/prompt-store.ts)                                             
+  ⎿  Added 10 lines                                                             
+       254          }                                                           
+       255        })),                                                          
+       256                                                                      
+       257 +    updateSectionVersion: (id) =>                                   
+       258 +      set((state) => ({                                             
+       259 +        prompt: {                                                   
+       260 +          ...state.prompt,                                          
+       261 +          sections: state.prompt.sections.map((section) =>          
+       262 +            section.id === id ? { ...section, version:              
+           + section.version + 1 } : section                                    
+       263 +          )                                                         
+       264 +        }                                                           
+       265 +      })),                                                          
+       266 +                                                                    
+       267      toggleInstrumentInSection: (sectionId, instrumentId) =>         
+       268        set((state) => ({                                             
+       269          prompt: {                                                   
+                                                                                
+⏺ Let me check if there's any mock data that needs to be updated with version   
+  fields:                                                                       
+                                                                                
+⏺ Search(pattern: "global_settings:\s*\{")                                      
+  ⎿  Found 2 files (ctrl+o to expand)                                           
+                                                                                
+⏺ Search(pattern: "global_settings:\s*\{", path: "app/page.tsx", output_mode:   
+        "content")                                                              
+  ⎿  Found 11 lines (ctrl+o to expand)                                          
+                                                                                
+⏺ Read(app/page.tsx)                                                            
+  ⎿  Read 50 lines                                                              
+                                                                                
+⏺ Update(app/page.tsx)                                                          
+  ⎿  Added 3 lines                                                              
+       53            time_signature: "4/4",                                     
+       54            tempo: { bpm: 120, named: "Moderato" },                    
+       55            mood: [],                                                  
+       56 +          version: 1,                                                
+       57          },                                                           
+       58          instruments: prompt.instruments.map((inst) => ({             
+       59            id: inst.id,                                               
+       60            name: inst.name,                                           
+       61            timbre: [],                                                
+       62            effects: [],                                               
+       63 +          version: inst.version,                                     
+       64          })),                                                         
+       65          sections: prompt.sections.map((sec) => ({                    
+       66            id: sec.id,                                                
+       67            type: sec.type,                                            
+       68            included_instrument_ids: prompt.instruments.map((i)        
+            => i.id),                                                           
+       69            performance: {},                                           
+       70 +          version: sec.version,                                      
+       71          })),                                                         
+       72        };                                                             
+       73                                                                       
+                                                                                
+⏺ Perfect! I've now added version support to the evaluation page. Here's what I 
+  did:                                                                          
+                                                                                
+  Additional Changes:                                                           
+                                                                                
+  1. Type Definitions (lib/types.ts)                                            
+                                                                                
+  - Added version: number to GlobalSettings interface (lib/types.ts:118)        
+  - Added version: number to Instrument interface (lib/types.ts:127)            
+  - Added version: number to Section interface (lib/types.ts:141)               
+                                                                                
+  2. Prompt Store (lib/store/prompt-store.ts)                                   
+                                                                                
+  - Initialized global_settings.version: 1 in initial state                     
+  (lib/store/prompt-store.ts:49)                                                
+  - Added updateGlobalVersion() method (lib/store/prompt-store.ts:70)           
+  - Added version: 1 to new instruments (lib/store/prompt-store.ts:148)         
+  - Added updateInstrumentVersion(id) method (lib/store/prompt-store.ts:184)    
+  - Added version: 1 to new sections (lib/store/prompt-store.ts:233)            
+  - Added updateSectionVersion(id) method (lib/store/prompt-store.ts:257)       
+                                                                                
+  3. Evaluation Rows (components/prompt-eval-row.tsx)                           
+                                                                                
+  - Added version display to GlobalPromptEvalRow (lib/store/prompt-store.ts:30) 
+  - Added version display to InstrumentPromptEvalRow                            
+  (lib/store/prompt-store.ts:136)                                               
+  - Added version display to SectionPromptEvalRow                               
+  (lib/store/prompt-store.ts:272)                                               
+                                                                                
+  4. Conversion Logic (app/page.tsx:56)                                         
+                                                                                
+  - Updated TextPrompt → ThreeTierPrompt conversion to include version fields   
+                                                                                
+  Now you should see < v1 > (or the current version number) displayed on:       
+  - The eval page global settings row                                           
+  - Each instrument row                                                         
+  - Each section row                                                            
+                                                                                
+  The version numbers will increment when you use the Update Prompt buttons!    
+                                                                                
+> i can't see the update prompt on the eval section                             
+                                                                                
+⏺ You're right! I need to add Update Prompt buttons to the evaluation rows as   
+  well. Let me add those now:                                                   
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 2 lines, removed 1 line                                              
+        4    import { Textarea } from "@/components/ui/textarea";               
+        5    import { Button } from "@/components/ui/button";                   
+        6    import { ThreeTierPrompt, Instrument, Section } from               
+            "@/lib/types";                                                      
+        7 -  import { Sparkles, Loader2 } from "lucide-react";                  
+        7 +  import { Sparkles, Loader2, RefreshCw } from "lucide-react";       
+        8    import { useState } from "react";                                  
+        9 +  import { usePromptStore } from "@/lib/store/prompt-store";         
+       10                                                                       
+       11    interface GlobalPromptEvalRowProps {                               
+       12      prompt: ThreeTierPrompt;                                         
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 2 lines                                                              
+       17    }                                                                  
+       18                                                                       
+       19    export function GlobalPromptEvalRow({ prompt, note,                
+            onNoteChange, onGenerate, isGenerating }:                           
+            GlobalPromptEvalRowProps) {                                         
+       20 +    const { updateGlobalVersion } = usePromptStore();                
+       21 +                                                                     
+       22      // Generate text representation of global settings               
+       23      const promptText = `${prompt.global_settings.genre.join(',       
+             ')} in ${prompt.global_settings.key},                              
+            ${prompt.global_settings.time_signature} at                         
+            ${prompt.global_settings.tempo.bpm} BPM                             
+            (${prompt.global_settings.tempo.named}). Mood:                      
+            ${prompt.global_settings.mood.join(', ')}.`;                        
+       24                                                                       
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 27 lines, removed 17 lines                                           
+       42              className="min-h-[100px] text-sm resize-none             
+            bg-white/80 text-gray-700"                                          
+       43            />                                                         
+       44                                                                       
+       45 -          {onGenerate && (                                           
+       45 +          <div className="flex gap-2">                               
+       46              <Button                                                  
+       47 +              onClick={updateGlobalVersion}                          
+       48                size="sm"                                              
+       49 -              variant="outline"                                      
+       50 -              onClick={onGenerate}                                   
+       51 -              disabled={!hasNote || isGenerating}                    
+       52 -              className="h-7 text-xs bg-purple-600 text-white        
+          - hover:bg-purple-700 border-purple-600"                              
+       49 +              className="h-7 text-xs bg-purple-600                   
+          + hover:bg-purple-700"                                                
+       50              >                                                        
+       51 -              {isGenerating ? (                                      
+       52 -                <>                                                   
+       53 -                  <Loader2 className="h-3 w-3 mr-1                   
+          - animate-spin" />                                                    
+       54 -                  Generating Full Song...                            
+       55 -                </>                                                  
+       56 -              ) : (                                                  
+       57 -                <>                                                   
+       58 -                  <Sparkles className="h-3 w-3 mr-1" />              
+       59 -                  Generate                                           
+       60 -                </>                                                  
+       61 -              )}                                                     
+       51 +              <RefreshCw className="h-3 w-3 mr-1.5" />               
+       52 +              Update Prompt                                          
+       53              </Button>                                                
+       54 -          )}                                                         
+       54 +            {onGenerate && (                                         
+       55 +              <Button                                                
+       56 +                size="sm"                                            
+       57 +                variant="outline"                                    
+       58 +                onClick={onGenerate}                                 
+       59 +                disabled={!hasNote || isGenerating}                  
+       60 +                className="h-7 text-xs bg-purple-600                 
+          + text-white hover:bg-purple-700 border-purple-600"                   
+       61 +              >                                                      
+       62 +                {isGenerating ? (                                    
+       63 +                  <>                                                 
+       64 +                    <Loader2 className="h-3 w-3 mr-1                 
+          + animate-spin" />                                                    
+       65 +                    Generating Full Song...                          
+       66 +                  </>                                                
+       67 +                ) : (                                                
+       68 +                  <>                                                 
+       69 +                    <Sparkles className="h-3 w-3 mr-1" />            
+       70 +                    Generate                                         
+       71 +                  </>                                                
+       72 +                )}                                                   
+       73 +              </Button>                                              
+       74 +            )}                                                       
+       75 +          </div>                                                     
+       76                                                                       
+       77            {/* Musical Phrases as Badges */}                          
+       78            <div className="space-y-1.5">                              
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 2 lines                                                              
+       126    }                                                                 
+       127                                                                      
+       128    export function InstrumentPromptEvalRow({ instrument, note,       
+              onNoteChange, onGenerate, isGenerating }:                         
+             InstrumentPromptEvalRowProps) {                                    
+       129 +    const { updateInstrumentVersion } = usePromptStore();           
+       130 +                                                                    
+       131      // Generate text representation of instrument                   
+       132      let promptText = `${instrument.name}`;                          
+       133      if (instrument.timbre.length > 0) {                             
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 27 lines, removed 17 lines                                           
+       160              className="min-h-[80px] text-sm resize-none             
+             bg-white/80 text-gray-700"                                         
+       161            />                                                        
+       162                                                                      
+       163 -          {onGenerate && (                                          
+       163 +          <div className="flex gap-2">                              
+       164              <Button                                                 
+       165 +              onClick={() =>                                        
+           + updateInstrumentVersion(instrument.id)}                            
+       166                size="sm"                                             
+       167 -              variant="outline"                                     
+       168 -              onClick={onGenerate}                                  
+       169 -              disabled={!hasNote || isGenerating}                   
+       170 -              className="h-7 text-xs bg-blue-600 text-white         
+           - hover:bg-blue-700 border-blue-600"                                 
+       167 +              className="h-7 text-xs bg-blue-600                    
+           + hover:bg-blue-700"                                                 
+       168              >                                                       
+       169 -              {isGenerating ? (                                     
+       170 -                <>                                                  
+       171 -                  <Loader2 className="h-3 w-3 mr-1                  
+           - animate-spin" />                                                   
+       172 -                  Generating Full Song...                           
+       173 -                </>                                                 
+       174 -              ) : (                                                 
+       175 -                <>                                                  
+       176 -                  <Sparkles className="h-3 w-3 mr-1" />             
+       177 -                  Generate                                          
+       178 -                </>                                                 
+       179 -              )}                                                    
+       169 +              <RefreshCw className="h-3 w-3 mr-1.5" />              
+       170 +              Update Prompt                                         
+       171              </Button>                                               
+       172 -          )}                                                        
+       172 +            {onGenerate && (                                        
+       173 +              <Button                                               
+       174 +                size="sm"                                           
+       175 +                variant="outline"                                   
+       176 +                onClick={onGenerate}                                
+       177 +                disabled={!hasNote || isGenerating}                 
+       178 +                className="h-7 text-xs bg-blue-600 text-white       
+           +  hover:bg-blue-700 border-blue-600"                                
+       179 +              >                                                     
+       180 +                {isGenerating ? (                                   
+       181 +                  <>                                                
+       182 +                    <Loader2 className="h-3 w-3 mr-1                
+           + animate-spin" />                                                   
+       183 +                    Generating Full Song...                         
+       184 +                  </>                                               
+       185 +                ) : (                                               
+       186 +                  <>                                                
+       187 +                    <Sparkles className="h-3 w-3 mr-1" />           
+       188 +                    Generate                                        
+       189 +                  </>                                               
+       190 +                )}                                                  
+       191 +              </Button>                                             
+       192 +            )}                                                      
+       193 +          </div>                                                    
+       194                                                                      
+       195            {/* Musical Phrases as Badges */}                         
+       196            <div className="space-y-1.5">                             
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 2 lines                                                              
+       254    }                                                                 
+       255                                                                      
+       256    export function SectionPromptEvalRow({ section, prompt,           
+             note, onNoteChange, onGenerate, isGenerating }:                    
+             SectionPromptEvalRowProps) {                                       
+       257 +    const { updateSectionVersion } = usePromptStore();              
+       258 +                                                                    
+       259      const includedInstruments = prompt.instruments.filter((i)       
+              =>                                                                
+       260        section.included_instrument_ids.includes(i.id)                
+       261      );                                                              
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 27 lines, removed 17 lines                                           
+       308              className="min-h-[100px] text-sm resize-none            
+             bg-white/80 text-gray-700"                                         
+       309            />                                                        
+       310                                                                      
+       311 -          {onGenerate && (                                          
+       311 +          <div className="flex gap-2">                              
+       312              <Button                                                 
+       313 +              onClick={() =>                                        
+           + updateSectionVersion(section.id)}                                  
+       314                size="sm"                                             
+       315 -              variant="outline"                                     
+       316 -              onClick={onGenerate}                                  
+       317 -              disabled={!hasNote || isGenerating}                   
+       318 -              className="h-7 text-xs bg-green-600 text-white        
+           - hover:bg-green-700 border-green-600"                               
+       315 +              className="h-7 text-xs bg-green-600                   
+           + hover:bg-green-700"                                                
+       316              >                                                       
+       317 -              {isGenerating ? (                                     
+       318 -                <>                                                  
+       319 -                  <Loader2 className="h-3 w-3 mr-1                  
+           - animate-spin" />                                                   
+       320 -                  Generating Section...                             
+       321 -                </>                                                 
+       322 -              ) : (                                                 
+       323 -                <>                                                  
+       324 -                  <Sparkles className="h-3 w-3 mr-1" />             
+       325 -                  Generate                                          
+       326 -                </>                                                 
+       327 -              )}                                                    
+       317 +              <RefreshCw className="h-3 w-3 mr-1.5" />              
+       318 +              Update Prompt                                         
+       319              </Button>                                               
+       320 -          )}                                                        
+       320 +            {onGenerate && (                                        
+       321 +              <Button                                               
+       322 +                size="sm"                                           
+       323 +                variant="outline"                                   
+       324 +                onClick={onGenerate}                                
+       325 +                disabled={!hasNote || isGenerating}                 
+       326 +                className="h-7 text-xs bg-green-600                 
+           + text-white hover:bg-green-700 border-green-600"                    
+       327 +              >                                                     
+       328 +                {isGenerating ? (                                   
+       329 +                  <>                                                
+       330 +                    <Loader2 className="h-3 w-3 mr-1                
+           + animate-spin" />                                                   
+       331 +                    Generating Section...                           
+       332 +                  </>                                               
+       333 +                ) : (                                               
+       334 +                  <>                                                
+       335 +                    <Sparkles className="h-3 w-3 mr-1" />           
+       336 +                    Generate                                        
+       337 +                  </>                                               
+       338 +                )}                                                  
+       339 +              </Button>                                             
+       340 +            )}                                                      
+       341 +          </div>                                                    
+       342                                                                      
+       343            {/* Musical Phrases as Badges */}                         
+       344            <div className="space-y-1.5">                             
+                                                                                
+⏺ Perfect! I've now added the Update Prompt buttons to the evaluation page.     
+  Here's what I added:                                                          
+                                                                                
+  Changes to prompt-eval-row.tsx:                                               
+                                                                                
+  1. Imports (line 7-9)                                                         
+                                                                                
+  - Added RefreshCw icon                                                        
+  - Imported usePromptStore to access version update methods                    
+                                                                                
+  2. GlobalPromptEvalRow (line 46-53)                                           
+                                                                                
+  - Added Update Prompt button (purple styling)                                 
+  - Calls updateGlobalVersion() when clicked                                    
+  - Positioned alongside the Generate button                                    
+                                                                                
+  3. InstrumentPromptEvalRow (line 164-171)                                     
+                                                                                
+  - Added Update Prompt button (blue styling)                                   
+  - Calls updateInstrumentVersion(instrument.id) when clicked                   
+  - Positioned alongside the Generate button                                    
+                                                                                
+  4. SectionPromptEvalRow (line 312-319)                                        
+                                                                                
+  - Added Update Prompt button (green styling)                                  
+  - Calls updateSectionVersion(section.id) when clicked                         
+  - Positioned alongside the Generate button                                    
+                                                                                
+  Now on the evaluation page, you'll see:                                       
+  - Update Prompt button below each textarea (on the left side with the original
+   prompt)                                                                      
+  - Generate button next to it (when available)                                 
+  - Version numbers < v1 > in the headers                                       
+                                                                                
+  When you click Update Prompt, it will increment the version number for that   
+  specific element!                                                             
+                                                                                
+> I need to create a PRD 02 audio eval v2                                       
+                                                                                
+workflow goes as follows from builder to eval                                   
+                                                                                
+builder input all details, it notes when a word is used that contains           
+keywords and phrases like genre [pop] etc                                       
+                                                                                
+this gets input into global, instrument pallete, and song sections              
+                                                                                
+this then all gets added to the eval page                                       
+                                                                                
+Where each of those prompts gets input into their releveant sections            
+                                                                                
+then you can evaluate it to tweak it                                            
+                                                                                
+the update button is used to create a NEW version of that section.              
+                                                                                
+updating global or instrument creates a whole new generation while seciton      
+only affects that section                                                       
+                                                                                
+update button is linked to eval notes, should be under eval notes               
+                                                                                
+generate new is used once the prompt has been updated by the evaluation into    
+ a proper format                                                                
+                                                                                
+⏺ I understand! The workflow is:                                                
+                                                                                
+  1. Builder → Creates prompts with detected keywords                           
+  2. Eval Page → Review and refine prompts                                      
+  3. Update Prompt → Creates new version (should be under eval notes)           
+  4. Generate → Creates audio after prompt is refined                           
+                                                                                
+  Let me move the Update Prompt button to be under the eval notes (right side): 
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Removed 32 lines                                                           
+       42              className="min-h-[100px] text-sm resize-none             
+            bg-white/80 text-gray-700"                                          
+       43            />                                                         
+       44                                                                       
+       45 -          <div className="flex gap-2">                               
+       46 -            <Button                                                  
+       47 -              onClick={updateGlobalVersion}                          
+       48 -              size="sm"                                              
+       49 -              className="h-7 text-xs bg-purple-600                   
+          - hover:bg-purple-700"                                                
+       50 -            >                                                        
+       51 -              <RefreshCw className="h-3 w-3 mr-1.5" />               
+       52 -              Update Prompt                                          
+       53 -            </Button>                                                
+       54 -            {onGenerate && (                                         
+       55 -              <Button                                                
+       56 -                size="sm"                                            
+       57 -                variant="outline"                                    
+       58 -                onClick={onGenerate}                                 
+       59 -                disabled={!hasNote || isGenerating}                  
+       60 -                className="h-7 text-xs bg-purple-600                 
+          - text-white hover:bg-purple-700 border-purple-600"                   
+       61 -              >                                                      
+       62 -                {isGenerating ? (                                    
+       63 -                  <>                                                 
+       64 -                    <Loader2 className="h-3 w-3 mr-1                 
+          - animate-spin" />                                                    
+       65 -                    Generating Full Song...                          
+       66 -                  </>                                                
+       67 -                ) : (                                                
+       68 -                  <>                                                 
+       69 -                    <Sparkles className="h-3 w-3 mr-1" />            
+       70 -                    Generate                                         
+       71 -                  </>                                                
+       72 -                )}                                                   
+       73 -              </Button>                                              
+       74 -            )}                                                       
+       75 -          </div>                                                     
+       76 -                                                                     
+       45            {/* Musical Phrases as Badges */}                          
+       46            <div className="space-y-1.5">                              
+       47              {prompt.global_settings.genre.length > 0 && (            
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 32 lines, removed 1 line                                             
+       72          </div>                                                       
+       73                                                                       
+       74          {/* Right: Evaluation Notes */}                              
+       75 -        <div>                                                        
+       75 +        <div className="space-y-3">                                  
+       76            <h3 className="text-sm font-semibold text-purple-900       
+             mb-2">Evaluation Notes</h3>                                        
+       77            <Textarea                                                  
+       78              value={note}                                             
+     ...                                                                        
+        80              placeholder="Notes on genre, tempo, mood, key,          
+             time signature..."                                                 
+        81              className="min-h-[180px] text-sm resize-none            
+             bg-white"                                                          
+        82            />                                                        
+        83 +          <div className="flex gap-2">                              
+        84 +            <Button                                                 
+        85 +              onClick={updateGlobalVersion}                         
+        86 +              size="sm"                                             
+        87 +              className="h-7 text-xs bg-purple-600                  
+           + hover:bg-purple-700"                                               
+        88 +            >                                                       
+        89 +              <RefreshCw className="h-3 w-3 mr-1.5" />              
+        90 +              Update Prompt                                         
+        91 +            </Button>                                               
+        92 +            {onGenerate && (                                        
+        93 +              <Button                                               
+        94 +                size="sm"                                           
+        95 +                variant="outline"                                   
+        96 +                onClick={onGenerate}                                
+        97 +                disabled={!hasNote || isGenerating}                 
+        98 +                className="h-7 text-xs bg-purple-600                
+           + text-white hover:bg-purple-700 border-purple-600"                  
+        99 +              >                                                     
+       100 +                {isGenerating ? (                                   
+       101 +                  <>                                                
+       102 +                    <Loader2 className="h-3 w-3 mr-1                
+           + animate-spin" />                                                   
+       103 +                    Generating Full Song...                         
+       104 +                  </>                                               
+       105 +                ) : (                                               
+       106 +                  <>                                                
+       107 +                    <Sparkles className="h-3 w-3 mr-1" />           
+       108 +                    Generate                                        
+       109 +                  </>                                               
+       110 +                )}                                                  
+       111 +              </Button>                                             
+       112 +            )}                                                      
+       113 +          </div>                                                    
+       114          </div>                                                      
+       115        </div>                                                        
+       116      );                                                              
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Removed 32 lines                                                           
+       159              className="min-h-[80px] text-sm resize-none             
+             bg-white/80 text-gray-700"                                         
+       160            />                                                        
+       161                                                                      
+       162 -          <div className="flex gap-2">                              
+       163 -            <Button                                                 
+       164 -              onClick={() =>                                        
+           - updateInstrumentVersion(instrument.id)}                            
+       165 -              size="sm"                                             
+       166 -              className="h-7 text-xs bg-blue-600                    
+           - hover:bg-blue-700"                                                 
+       167 -            >                                                       
+       168 -              <RefreshCw className="h-3 w-3 mr-1.5" />              
+       169 -              Update Prompt                                         
+       170 -            </Button>                                               
+       171 -            {onGenerate && (                                        
+       172 -              <Button                                               
+       173 -                size="sm"                                           
+       174 -                variant="outline"                                   
+       175 -                onClick={onGenerate}                                
+       176 -                disabled={!hasNote || isGenerating}                 
+       177 -                className="h-7 text-xs bg-blue-600 text-white       
+           -  hover:bg-blue-700 border-blue-600"                                
+       178 -              >                                                     
+       179 -                {isGenerating ? (                                   
+       180 -                  <>                                                
+       181 -                    <Loader2 className="h-3 w-3 mr-1                
+           - animate-spin" />                                                   
+       182 -                    Generating Full Song...                         
+       183 -                  </>                                               
+       184 -                ) : (                                               
+       185 -                  <>                                                
+       186 -                    <Sparkles className="h-3 w-3 mr-1" />           
+       187 -                    Generate                                        
+       188 -                  </>                                               
+       189 -                )}                                                  
+       190 -              </Button>                                             
+       191 -            )}                                                      
+       192 -          </div>                                                    
+       193 -                                                                    
+       162            {/* Musical Phrases as Badges */}                         
+       163            <div className="space-y-1.5">                             
+       164              {instrument.timbre.length > 0 && (                      
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 32 lines, removed 1 line                                             
+       198          </div>                                                      
+       199                                                                      
+       200          {/* Right: Evaluation Notes */}                             
+       201 -        <div>                                                       
+       201 +        <div className="space-y-3">                                 
+       202            <h3 className="text-sm font-semibold text-blue-900        
+             mb-2">Evaluation Notes</h3>                                        
+       203            <Textarea                                                 
+       204              value={note}                                            
+     ...                                                                        
+       206              placeholder={`Notes on ${instrument.name}:              
+             timbre, effects, performance...`}                                  
+       207              className="min-h-[140px] text-sm resize-none            
+             bg-white"                                                          
+       208            />                                                        
+       209 +          <div className="flex gap-2">                              
+       210 +            <Button                                                 
+       211 +              onClick={() =>                                        
+           + updateInstrumentVersion(instrument.id)}                            
+       212 +              size="sm"                                             
+       213 +              className="h-7 text-xs bg-blue-600                    
+           + hover:bg-blue-700"                                                 
+       214 +            >                                                       
+       215 +              <RefreshCw className="h-3 w-3 mr-1.5" />              
+       216 +              Update Prompt                                         
+       217 +            </Button>                                               
+       218 +            {onGenerate && (                                        
+       219 +              <Button                                               
+       220 +                size="sm"                                           
+       221 +                variant="outline"                                   
+       222 +                onClick={onGenerate}                                
+       223 +                disabled={!hasNote || isGenerating}                 
+       224 +                className="h-7 text-xs bg-blue-600 text-white       
+           +  hover:bg-blue-700 border-blue-600"                                
+       225 +              >                                                     
+       226 +                {isGenerating ? (                                   
+       227 +                  <>                                                
+       228 +                    <Loader2 className="h-3 w-3 mr-1                
+           + animate-spin" />                                                   
+       229 +                    Generating Full Song...                         
+       230 +                  </>                                               
+       231 +                ) : (                                               
+       232 +                  <>                                                
+       233 +                    <Sparkles className="h-3 w-3 mr-1" />           
+       234 +                    Generate                                        
+       235 +                  </>                                               
+       236 +                )}                                                  
+       237 +              </Button>                                             
+       238 +            )}                                                      
+       239 +          </div>                                                    
+       240          </div>                                                      
+       241        </div>                                                        
+       242      );                                                              
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Removed 32 lines                                                           
+       306              className="min-h-[100px] text-sm resize-none            
+             bg-white/80 text-gray-700"                                         
+       307            />                                                        
+       308                                                                      
+       309 -          <div className="flex gap-2">                              
+       310 -            <Button                                                 
+       311 -              onClick={() =>                                        
+           - updateSectionVersion(section.id)}                                  
+       312 -              size="sm"                                             
+       313 -              className="h-7 text-xs bg-green-600                   
+           - hover:bg-green-700"                                                
+       314 -            >                                                       
+       315 -              <RefreshCw className="h-3 w-3 mr-1.5" />              
+       316 -              Update Prompt                                         
+       317 -            </Button>                                               
+       318 -            {onGenerate && (                                        
+       319 -              <Button                                               
+       320 -                size="sm"                                           
+       321 -                variant="outline"                                   
+       322 -                onClick={onGenerate}                                
+       323 -                disabled={!hasNote || isGenerating}                 
+       324 -                className="h-7 text-xs bg-green-600                 
+           - text-white hover:bg-green-700 border-green-600"                    
+       325 -              >                                                     
+       326 -                {isGenerating ? (                                   
+       327 -                  <>                                                
+       328 -                    <Loader2 className="h-3 w-3 mr-1                
+           - animate-spin" />                                                   
+       329 -                    Generating Section...                           
+       330 -                  </>                                               
+       331 -                ) : (                                               
+       332 -                  <>                                                
+       333 -                    <Sparkles className="h-3 w-3 mr-1" />           
+       334 -                    Generate                                        
+       335 -                  </>                                               
+       336 -                )}                                                  
+       337 -              </Button>                                             
+       338 -            )}                                                      
+       339 -          </div>                                                    
+       340 -                                                                    
+       309            {/* Musical Phrases as Badges */}                         
+       310            <div className="space-y-1.5">                             
+       311              {allExpressions.length > 0 && (                         
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 32 lines, removed 1 line                                             
+       327          </div>                                                      
+       328                                                                      
+       329          {/* Right: Evaluation Notes */}                             
+       330 -        <div>                                                       
+       330 +        <div className="space-y-3">                                 
+       331            <h3 className="text-sm font-semibold text-green-900       
+              mb-2">Evaluation Notes</h3>                                       
+       332            <Textarea                                                 
+       333              value={note}                                            
+     ...                                                                        
+       335              placeholder={`Notes on ${section.type}:                 
+             arrangement, performance, transitions...`}                         
+       336              className="min-h-[140px] text-sm resize-none            
+             bg-white"                                                          
+       337            />                                                        
+       338 +          <div className="flex gap-2">                              
+       339 +            <Button                                                 
+       340 +              onClick={() =>                                        
+           + updateSectionVersion(section.id)}                                  
+       341 +              size="sm"                                             
+       342 +              className="h-7 text-xs bg-green-600                   
+           + hover:bg-green-700"                                                
+       343 +            >                                                       
+       344 +              <RefreshCw className="h-3 w-3 mr-1.5" />              
+       345 +              Update Prompt                                         
+       346 +            </Button>                                               
+       347 +            {onGenerate && (                                        
+       348 +              <Button                                               
+       349 +                size="sm"                                           
+       350 +                variant="outline"                                   
+       351 +                onClick={onGenerate}                                
+       352 +                disabled={!hasNote || isGenerating}                 
+       353 +                className="h-7 text-xs bg-green-600                 
+           + text-white hover:bg-green-700 border-green-600"                    
+       354 +              >                                                     
+       355 +                {isGenerating ? (                                   
+       356 +                  <>                                                
+       357 +                    <Loader2 className="h-3 w-3 mr-1                
+           + animate-spin" />                                                   
+       358 +                    Generating Section...                           
+       359 +                  </>                                               
+       360 +                ) : (                                               
+       361 +                  <>                                                
+       362 +                    <Sparkles className="h-3 w-3 mr-1" />           
+       363 +                    Generate                                        
+       364 +                  </>                                               
+       365 +                )}                                                  
+       366 +              </Button>                                             
+       367 +            )}                                                      
+       368 +          </div>                                                    
+       369          </div>                                                      
+       370        </div>                                                        
+       371      );                                                              
+                                                                                
+⏺ Perfect! I've reorganized the eval page to match the workflow. Here's the     
+  updated structure:                                                            
+                                                                                
+  Updated Eval Page Layout                                                      
+                                                                                
+  Left Side (Original Prompt - Read Only)                                       
+                                                                                
+  - Header: Section name + version < v1 >                                       
+  - Textarea: Original prompt (read-only)                                       
+  - Badges: Musical phrases/keywords                                            
+                                                                                
+  Right Side (Evaluation Notes - Editable)                                      
+                                                                                
+  - Header: "Evaluation Notes"                                                  
+  - Textarea: Your notes for refining the prompt                                
+  - Buttons (underneath eval notes):                                            
+    - Update Prompt: Creates new version                                        
+        - Global/Instrument → Generates whole new song                          
+      - Section → Only regenerates that section                                 
+    - Generate: Creates audio once prompt is refined                            
+                                                                                
+  Workflow Summary                                                              
+                                                                                
+  1. Builder Phase:                                                             
+    - Input details with keyword detection [genre], [timbre], etc.              
+    - Creates: Global settings, Instrument palette, Song sections               
+  2. Eval Page:                                                                 
+    - Review: Original prompts displayed on left                                
+    - Refine: Add evaluation notes on right                                     
+    - Update Prompt: Click to create new version (increments version number)    
+    - Generate: Click to create audio with refined prompt                       
+  3. Version Control:                                                           
+    - Each update creates a new version (v1 → v2 → v3...)                       
+    - Global/Instrument updates → Full regeneration                             
+    - Section updates → Partial regeneration                                    
+                                                                                
+  The buttons are now correctly positioned under the eval notes where they      
+  logically belong in the workflow!                                             
+                                                                                
+> The generate button should be the with original prompt section                
+                                                                                
+⏺ Got it! Let me move the Generate button to the original prompt section (left  
+  side), and keep Update Prompt under eval notes (right side):                  
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Error editing file                                                         
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Error editing file                                                         
+                                                                                
+⏺ Read(components/prompt-eval-row.tsx)                                          
+  ⎿  Read 50 lines                                                              
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 22 lines                                                             
+       42              className="min-h-[100px] text-sm resize-none             
+            bg-white/80 text-gray-700"                                          
+       43            />                                                         
+       44                                                                       
+       45 +          {onGenerate && (                                           
+       46 +            <Button                                                  
+       47 +              size="sm"                                              
+       48 +              variant="outline"                                      
+       49 +              onClick={onGenerate}                                   
+       50 +              disabled={!hasNote || isGenerating}                    
+       51 +              className="h-7 text-xs bg-purple-600 text-white        
+          + hover:bg-purple-700 border-purple-600"                              
+       52 +            >                                                        
+       53 +              {isGenerating ? (                                      
+       54 +                <>                                                   
+       55 +                  <Loader2 className="h-3 w-3 mr-1                   
+          + animate-spin" />                                                    
+       56 +                  Generating Full Song...                            
+       57 +                </>                                                  
+       58 +              ) : (                                                  
+       59 +                <>                                                   
+       60 +                  <Sparkles className="h-3 w-3 mr-1" />              
+       61 +                  Generate                                           
+       62 +                </>                                                  
+       63 +              )}                                                     
+       64 +            </Button>                                                
+       65 +          )}                                                         
+       66 +                                                                     
+       67            {/* Musical Phrases as Badges */}                          
+       68            <div className="space-y-1.5">                              
+       69              {prompt.global_settings.genre.length > 0 && (            
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 8 lines, removed 31 lines                                            
+       102              placeholder="Notes on genre, tempo, mood, key,          
+             time signature..."                                                 
+       103              className="min-h-[180px] text-sm resize-none            
+             bg-white"                                                          
+       104            />                                                        
+       105 -          <div className="flex gap-2">                              
+       106 -            <Button                                                 
+       107 -              onClick={updateGlobalVersion}                         
+       108 -              size="sm"                                             
+       109 -              className="h-7 text-xs bg-purple-600                  
+           - hover:bg-purple-700"                                               
+       110 -            >                                                       
+       111 -              <RefreshCw className="h-3 w-3 mr-1.5" />              
+       112 -              Update Prompt                                         
+       113 -            </Button>                                               
+       114 -            {onGenerate && (                                        
+       115 -              <Button                                               
+       116 -                size="sm"                                           
+       117 -                variant="outline"                                   
+       118 -                onClick={onGenerate}                                
+       119 -                disabled={!hasNote || isGenerating}                 
+       120 -                className="h-7 text-xs bg-purple-600                
+           - text-white hover:bg-purple-700 border-purple-600"                  
+       121 -              >                                                     
+       122 -                {isGenerating ? (                                   
+       123 -                  <>                                                
+       124 -                    <Loader2 className="h-3 w-3 mr-1                
+           - animate-spin" />                                                   
+       125 -                    Generating Full Song...                         
+       126 -                  </>                                               
+       127 -                ) : (                                               
+       128 -                  <>                                                
+       129 -                    <Sparkles className="h-3 w-3 mr-1" />           
+       130 -                    Generate                                        
+       131 -                  </>                                               
+       132 -                )}                                                  
+       133 -              </Button>                                             
+       134 -            )}                                                      
+       135 -          </div>                                                    
+       105 +          <Button                                                   
+       106 +            onClick={updateGlobalVersion}                           
+       107 +            size="sm"                                               
+       108 +            className="h-7 text-xs bg-purple-600                    
+           + hover:bg-purple-700"                                               
+       109 +          >                                                         
+       110 +            <RefreshCw className="h-3 w-3 mr-1.5" />                
+       111 +            Update Prompt                                           
+       112 +          </Button>                                                 
+       113          </div>                                                      
+       114        </div>                                                        
+       115      );                                                              
+                                                                                
+⏺ Now let me do the same for the Instrument row:                                
+                                                                                
+⏺ Read(components/prompt-eval-row.tsx)                                          
+  ⎿  Read 80 lines                                                              
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 22 lines                                                             
+       158              className="min-h-[80px] text-sm resize-none             
+             bg-white/80 text-gray-700"                                         
+       159            />                                                        
+       160                                                                      
+       161 +          {onGenerate && (                                          
+       162 +            <Button                                                 
+       163 +              size="sm"                                             
+       164 +              variant="outline"                                     
+       165 +              onClick={onGenerate}                                  
+       166 +              disabled={!hasNote || isGenerating}                   
+       167 +              className="h-7 text-xs bg-blue-600 text-white         
+           + hover:bg-blue-700 border-blue-600"                                 
+       168 +            >                                                       
+       169 +              {isGenerating ? (                                     
+       170 +                <>                                                  
+       171 +                  <Loader2 className="h-3 w-3 mr-1                  
+           + animate-spin" />                                                   
+       172 +                  Generating Full Song...                           
+       173 +                </>                                                 
+       174 +              ) : (                                                 
+       175 +                <>                                                  
+       176 +                  <Sparkles className="h-3 w-3 mr-1" />             
+       177 +                  Generate                                          
+       178 +                </>                                                 
+       179 +              )}                                                    
+       180 +            </Button>                                               
+       181 +          )}                                                        
+       182 +                                                                    
+       183            {/* Musical Phrases as Badges */}                         
+       184            <div className="space-y-1.5">                             
+       185              {instrument.timbre.length > 0 && (                      
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 8 lines, removed 31 lines                                            
+       227              placeholder={`Notes on ${instrument.name}:              
+             timbre, effects, performance...`}                                  
+       228              className="min-h-[140px] text-sm resize-none            
+             bg-white"                                                          
+       229            />                                                        
+       230 -          <div className="flex gap-2">                              
+       231 -            <Button                                                 
+       232 -              onClick={() =>                                        
+           - updateInstrumentVersion(instrument.id)}                            
+       233 -              size="sm"                                             
+       234 -              className="h-7 text-xs bg-blue-600                    
+           - hover:bg-blue-700"                                                 
+       235 -            >                                                       
+       236 -              <RefreshCw className="h-3 w-3 mr-1.5" />              
+       237 -              Update Prompt                                         
+       238 -            </Button>                                               
+       239 -            {onGenerate && (                                        
+       240 -              <Button                                               
+       241 -                size="sm"                                           
+       242 -                variant="outline"                                   
+       243 -                onClick={onGenerate}                                
+       244 -                disabled={!hasNote || isGenerating}                 
+       245 -                className="h-7 text-xs bg-blue-600 text-white       
+           -  hover:bg-blue-700 border-blue-600"                                
+       246 -              >                                                     
+       247 -                {isGenerating ? (                                   
+       248 -                  <>                                                
+       249 -                    <Loader2 className="h-3 w-3 mr-1                
+           - animate-spin" />                                                   
+       250 -                    Generating Full Song...                         
+       251 -                  </>                                               
+       252 -                ) : (                                               
+       253 -                  <>                                                
+       254 -                    <Sparkles className="h-3 w-3 mr-1" />           
+       255 -                    Generate                                        
+       256 -                  </>                                               
+       257 -                )}                                                  
+       258 -              </Button>                                             
+       259 -            )}                                                      
+       260 -          </div>                                                    
+       230 +          <Button                                                   
+       231 +            onClick={() =>                                          
+           + updateInstrumentVersion(instrument.id)}                            
+       232 +            size="sm"                                               
+       233 +            className="h-7 text-xs bg-blue-600                      
+           + hover:bg-blue-700"                                                 
+       234 +          >                                                         
+       235 +            <RefreshCw className="h-3 w-3 mr-1.5" />                
+       236 +            Update Prompt                                           
+       237 +          </Button>                                                 
+       238          </div>                                                      
+       239        </div>                                                        
+       240      );                                                              
+                                                                                
+⏺ Now let me do the same for the Section row:                                   
+                                                                                
+⏺ Read(components/prompt-eval-row.tsx)                                          
+  ⎿  Read 80 lines                                                              
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 22 lines                                                             
+       304              className="min-h-[100px] text-sm resize-none            
+             bg-white/80 text-gray-700"                                         
+       305            />                                                        
+       306                                                                      
+       307 +          {onGenerate && (                                          
+       308 +            <Button                                                 
+       309 +              size="sm"                                             
+       310 +              variant="outline"                                     
+       311 +              onClick={onGenerate}                                  
+       312 +              disabled={!hasNote || isGenerating}                   
+       313 +              className="h-7 text-xs bg-green-600 text-white        
+           + hover:bg-green-700 border-green-600"                               
+       314 +            >                                                       
+       315 +              {isGenerating ? (                                     
+       316 +                <>                                                  
+       317 +                  <Loader2 className="h-3 w-3 mr-1                  
+           + animate-spin" />                                                   
+       318 +                  Generating Section...                             
+       319 +                </>                                                 
+       320 +              ) : (                                                 
+       321 +                <>                                                  
+       322 +                  <Sparkles className="h-3 w-3 mr-1" />             
+       323 +                  Generate                                          
+       324 +                </>                                                 
+       325 +              )}                                                    
+       326 +            </Button>                                               
+       327 +          )}                                                        
+       328 +                                                                    
+       329            {/* Musical Phrases as Badges */}                         
+       330            <div className="space-y-1.5">                             
+       331              {allExpressions.length > 0 && (                         
+                                                                                
+⏺ Update(components/prompt-eval-row.tsx)                                        
+  ⎿  Added 8 lines, removed 31 lines                                            
+       355              placeholder={`Notes on ${section.type}:                 
+             arrangement, performance, transitions...`}                         
+       356              className="min-h-[140px] text-sm resize-none            
+             bg-white"                                                          
+       357            />                                                        
+       358 -          <div className="flex gap-2">                              
+       359 -            <Button                                                 
+       360 -              onClick={() =>                                        
+           - updateSectionVersion(section.id)}                                  
+       361 -              size="sm"                                             
+       362 -              className="h-7 text-xs bg-green-600                   
+           - hover:bg-green-700"                                                
+       363 -            >                                                       
+       364 -              <RefreshCw className="h-3 w-3 mr-1.5" />              
+       365 -              Update Prompt                                         
+       366 -            </Button>                                               
+       367 -            {onGenerate && (                                        
+       368 -              <Button                                               
+       369 -                size="sm"                                           
+       370 -                variant="outline"                                   
+       371 -                onClick={onGenerate}                                
+       372 -                disabled={!hasNote || isGenerating}                 
+       373 -                className="h-7 text-xs bg-green-600                 
+           - text-white hover:bg-green-700 border-green-600"                    
+       374 -              >                                                     
+       375 -                {isGenerating ? (                                   
+       376 -                  <>                                                
+       377 -                    <Loader2 className="h-3 w-3 mr-1                
+           - animate-spin" />                                                   
+       378 -                    Generating Section...                           
+       379 -                  </>                                               
+       380 -                ) : (                                               
+       381 -                  <>                                                
+       382 -                    <Sparkles className="h-3 w-3 mr-1" />           
+       383 -                    Generate                                        
+       384 -                  </>                                               
+       385 -                )}                                                  
+       386 -              </Button>                                             
+       387 -            )}                                                      
+       388 -          </div>                                                    
+       358 +          <Button                                                   
+       359 +            onClick={() => updateSectionVersion(section.id)}        
+       360 +            size="sm"                                               
+       361 +            className="h-7 text-xs bg-green-600                     
+           + hover:bg-green-700"                                                
+       362 +          >                                                         
+       363 +            <RefreshCw className="h-3 w-3 mr-1.5" />                
+       364 +            Update Prompt                                           
+       365 +          </Button>                                                 
+       366          </div>                                                      
+       367        </div>                                                        
+       368      );                                                              
+                                                                                
+⏺ Perfect! I've reorganized the buttons to match your workflow. Here's the final
+   layout:                                                                      
+                                                                                
+  Updated Eval Page Structure                                                   
+                                                                                
+  Left Side - Original Prompt (Read Only)                                       
+                                                                                
+  1. Header: Section name + < v1 >                                              
+  2. Textarea: Original prompt (read-only)                                      
+  3. Generate Button: Creates audio from current prompt                         
+    - Global/Instrument → "Generating Full Song..."                             
+    - Section → "Generating Section..."                                         
+  4. Badges: Musical phrases/keywords                                           
+  5. Warning: Regeneration scope notice                                         
+                                                                                
+  Right Side - Evaluation Notes (Editable)                                      
+                                                                                
+  1. Header: "Evaluation Notes"                                                 
+  2. Textarea: Your refinement notes (editable)                                 
+  3. Update Prompt Button: Creates new version                                  
+                                                                                
+  Workflow                                                                      
+                                                                                
+  1. Review original prompt (left side)                                         
+  2. Write evaluation notes (right side)                                        
+  3. Update Prompt → Creates v2, v3, etc. (increments version)                  
+  4. Generate → Creates audio from the refined prompt                           
+                                                                                
+  The separation makes it clear:                                                
+  - Generate = Create audio from current prompt                                 
+  - Update Prompt = Create new version based on eval notes                      
+                                                                                
+  This matches PRD 02's evaluation iteration workflow perfectly!                
+

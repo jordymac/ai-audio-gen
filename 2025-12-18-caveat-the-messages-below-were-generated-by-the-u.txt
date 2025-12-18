@@ -1,0 +1,570 @@
+                                                                                
+ * ▐▛███▜▌ *   Claude Code v2.0.72                                              
+* ▝▜█████▛▘ *  Sonnet 4.5 · Claude Pro                                          
+ *  ▘▘ ▝▝  *   ~/ai-audio-gen                                                   
+                                                                                
+> /clear                                                                        
+  ⎿  (no content)                                                               
+                                                                                
+> i have added a file prototype_submission.md it is so you can create the       
+final page which comes after the eval page, this is submission piece, read      
+the prototype requirements then split thte task into checkpoints ie             
+                                                                                
+Create page                                                                     
+list component requirements etc                                                 
+                                                                                
+⏺ I'll read the prototype submission requirements and create a structured plan  
+  with checkpoints.                                                             
+                                                                                
+⏺ Read(prototype_submission_page.md)                                            
+  ⎿  Read 413 lines                                                             
+                                                                                
+⏺ I'll create a structured plan with clear checkpoints for building the         
+  submission page.                                                              
+                                                                                
+⏺ Perfect! Here's the detailed implementation plan for the submission page:     
+                                                                                
+  Implementation Plan: Submission Page                                          
+                                                                                
+  Checkpoint 1: Create Base Page Structure                                      
+                                                                                
+  File: /app/submission/page.tsx                                                
+                                                                                
+  Requirements:                                                                 
+  - Two-column layout (60/40 split)                                             
+  - Top section with version info heading                                       
+  - Bottom section with action buttons                                          
+  - Responsive grid layout using Tailwind                                       
+                                                                                
+  Components:                                                                   
+  - Layout wrapper with proper spacing                                          
+  - Version heading: "Submitting Version 2 for Library"                         
+  - Cancel and Submit buttons at bottom                                         
+                                                                                
+  ---                                                                           
+  Checkpoint 2: Add Navigation from Eval Page                                   
+                                                                                
+  File: /app/prompt-review/page.tsx (modify)                                    
+                                                                                
+  Requirements:                                                                 
+  - Add "Approve & Submit" button near version navigation                       
+  - Button passes current version data to submission page                       
+  - Uses Next.js router to navigate to /submission                              
+  - Passes version number via URL params or state                               
+                                                                                
+  ---                                                                           
+  Checkpoint 3: Build PromptReviewColumn Component                              
+                                                                                
+  File: /components/prompt-review-column.tsx                                    
+                                                                                
+  Requirements:                                                                 
+  - Read-only display of prompt structure                                       
+  - Shows Global Settings, Instruments, Sections                                
+  - Highlights [bracketed] terms                                                
+  - Reuses styling from existing prompt display components                      
+  - Takes version data as props                                                 
+                                                                                
+  Layout:                                                                       
+  Global Settings:                                                              
+    [text with highlighted brackets]                                            
+                                                                                
+  Instruments:                                                                  
+    Vocal: [terms]                                                              
+    Bass: [terms]                                                               
+    ...                                                                         
+                                                                                
+  Sections:                                                                     
+    Intro: [terms]                                                              
+    Verse: [terms]                                                              
+    ...                                                                         
+                                                                                
+  ---                                                                           
+  Checkpoint 4: Build MetadataExtractionColumn Component                        
+                                                                                
+  File: /components/metadata-extraction-column.tsx                              
+                                                                                
+  Requirements:                                                                 
+  - Heading: "Searchable Metadata"                                              
+  - Subheading: "Auto-extracted from your prompt"                               
+  - Display categorized tags in sections:                                       
+    - Genre Tags                                                                
+    - Mood Tags                                                                 
+    - Instrument Tags                                                           
+    - Performance Tags                                                          
+    - Production Tags                                                           
+    - Technical Details                                                         
+  - Uses TagBadge component for each tag                                        
+  - Wrapping layout for tags                                                    
+                                                                                
+  ---                                                                           
+  Checkpoint 5: Create Metadata Extraction Utility                              
+                                                                                
+  File: /lib/extract-metadata.ts                                                
+                                                                                
+  Functions needed:                                                             
+  // Extract all [bracketed] terms                                              
+  extractBracketedTerms(text: string): string[]                                 
+                                                                                
+  // Categorize terms based on glossary                                         
+  categorizeTerms(terms: string[]): CategorizedMetadata                         
+                                                                                
+  // Extract technical details (BPM, key, time sig)                             
+  extractTechnicalDetails(text: string): TechnicalDetails                       
+                                                                                
+  // Main extraction function                                                   
+  extractMetadata(promptData: PromptData): SubmissionMetadata                   
+                                                                                
+  Categorization logic:                                                         
+  - Use existing glossary data from /lib/glossary-data.ts                       
+  - Match terms to glossary categories                                          
+  - Fallback categorization for unlisted terms                                  
+                                                                                
+  ---                                                                           
+  Checkpoint 6: Build TagInput Component                                        
+                                                                                
+  File: /components/tag-input.tsx                                               
+                                                                                
+  Requirements:                                                                 
+  - Input field with "Type and press Enter..." placeholder                      
+  - Enter key adds tag                                                          
+  - Displays tags as removable badges below input                               
+  - X button to remove tags                                                     
+  - State management for tag list                                               
+  - Pre-filled with demo tags: "background music", "chill"                      
+                                                                                
+  Visual:                                                                       
+  [Input field            ]                                                     
+  [badge ×] [badge ×]                                                           
+                                                                                
+  ---                                                                           
+  Checkpoint 7: Build TagBadge Component                                        
+                                                                                
+  File: /components/tag-badge.tsx                                               
+                                                                                
+  Requirements:                                                                 
+  - Reusable badge component for displaying tags                                
+  - Props: label, removable, onRemove                                           
+  - Styling: rounded, light grey bg, padding                                    
+  - Optional X button for removal                                               
+  - Uses shadcn Badge component as base                                         
+                                                                                
+  ---                                                                           
+  Checkpoint 8: Implement Submission Flow                                       
+                                                                                
+  In: /app/submission/page.tsx                                                  
+                                                                                
+  Requirements:                                                                 
+  - Cancel button: navigate back to prompt-review                               
+  - Submit button:                                                              
+    - Show loading spinner (1 second)                                           
+    - Collect all metadata                                                      
+    - Console log the submission data                                           
+    - Show success toast: "Track submitted successfully!"                       
+    - Navigate to home page after 2 seconds                                     
+  - Success state management                                                    
+                                                                                
+  Data to collect:                                                              
+  {                                                                             
+    versionNumber: number                                                       
+    promptStructure: {global, instruments, sections}                            
+    masterPrompt: string                                                        
+    metadata: {                                                                 
+      genre_tags, mood_tags, instrument_tags,                                   
+      performance_tags, production_tags,                                        
+      technical: {bpm, key, timeSignature}                                      
+    }                                                                           
+    useCaseTags: string[]                                                       
+    description: string                                                         
+  }                                                                             
+                                                                                
+  ---                                                                           
+  Checkpoint 9: Add Zustand Store                                               
+                                                                                
+  File: /lib/store/submission-store.ts                                          
+                                                                                
+  State needed:                                                                 
+  {                                                                             
+    currentVersion: VersionData | null                                          
+    submittedData: SubmissionData | null                                        
+    setCurrentVersion: (version) => void                                        
+    submitToLibrary: (data) => void                                             
+    reset: () => void                                                           
+  }                                                                             
+                                                                                
+  Purpose:                                                                      
+  - Manage version data passed from eval page                                   
+  - Store submission state                                                      
+  - Handle reset for new prompts                                                
+                                                                                
+  ---                                                                           
+  Checkpoint 10: Test Complete Workflow                                         
+                                                                                
+  Test flow:                                                                    
+  1. Start at prompt-review page                                                
+  2. Click "Approve & Submit" button                                            
+  3. Verify submission page loads with correct version                          
+  4. Verify all bracketed terms are extracted                                   
+  5. Verify categorization is correct                                           
+  6. Add custom use case tags                                                   
+  7. Enter description                                                          
+  8. Click Submit                                                               
+  9. Verify success message                                                     
+  10. Verify navigation to home page                                            
+  11. Verify home page is reset/ready for new prompt                            
+                                                                                
+  Check:                                                                        
+  - All components render correctly                                             
+  - Metadata extraction works for all categories                                
+  - Tag input functionality works                                               
+  - Navigation flow is smooth                                                   
+  - Console logs show correct data structure                                    
+  - Success states appear as expected                                           
+                                                                                
+  ---                                                                           
+  Component Dependencies Tree                                                   
+                                                                                
+  submission/page.tsx                                                           
+  ├── PromptReviewColumn                                                        
+  │   └── PromptDisplayReadonly (reuse existing)                                
+  ├── MetadataExtractionColumn                                                  
+  │   ├── TagBadge (multiple instances)                                         
+  │   └── categorized metadata sections                                         
+  ├── TagInput                                                                  
+  │   └── TagBadge (for added tags)                                             
+  ├── Textarea (description)                                                    
+  └── Buttons (Cancel, Submit)                                                  
+                                                                                
+  New Files Required                                                            
+                                                                                
+  1. /app/submission/page.tsx - Main submission page                            
+  2. /components/prompt-review-column.tsx - Left column                         
+  3. /components/metadata-extraction-column.tsx - Right column                  
+  4. /components/tag-input.tsx - Custom tag input                               
+  5. /components/tag-badge.tsx - Tag display component                          
+  6. /lib/extract-metadata.ts - Extraction logic                                
+  7. /lib/store/submission-store.ts - State management                          
+  8. /lib/types.ts - Add new types (SubmissionMetadata, CategorizedMetadata,    
+  etc.)                                                                         
+                                                                                
+  Ready to start implementation? I can begin with Checkpoint 1 or any specific  
+  checkpoint you'd like to tackle first.                                        
+                                                                                
+> Yep lets get stared                                                           
+                                                                                
+⏺ Perfect! Let's start with Checkpoint 1. I'll create the base submission page  
+  structure.                                                                    
+                                                                                
+⏺ Read(app/prompt-review/page.tsx)                                              
+  ⎿  Read 326 lines                                                             
+                                                                                
+⏺ Now I'll create the base submission page structure:                           
+                                                                                
+⏺ Write(app/submission/page.tsx)                                                
+  ⎿  Wrote 159 lines to app/submission/page.tsx                                 
+     "use client";                                                              
+     import { useState } from "react";                                          
+     import { useRouter } from "next/navigation";                               
+     import { Button } from "@/components/ui/button";                           
+     import { Card } from "@/components/ui/card";                               
+     import { Textarea } from "@/components/ui/textarea";                       
+     import { ArrowLeft, CheckCircle2 } from "lucide-react";                    
+     import Link from "next/link";                                              
+     … +149 lines (ctrl+o to expand)                                            
+                                                                                
+⏺ Checkpoint 1 complete! Now let's add the "Approve & Submit" button to the     
+  evaluation page:                                                              
+                                                                                
+⏺ Update(app/prompt-review/page.tsx)                                            
+  ⎿  Added 11 lines                                                             
+       306              </Button>                                               
+       307            </div>                                                    
+       308                                                                      
+       309 +          {/* Approve & Submit Button */}                           
+       310 +          <div className="flex justify-center mb-8">                
+       311 +            <Button                                                 
+       312 +              onClick={() => router.push('/submission')}            
+       313 +              size="lg"                                             
+       314 +              className="bg-gradient-to-r from-green-600            
+           + to-emerald-600 hover:from-green-700 hover:to-emerald-700           
+           + px-8"                                                              
+       315 +            >                                                       
+       316 +              Approve & Submit to Library                           
+       317 +            </Button>                                               
+       318 +          </div>                                                    
+       319 +                                                                    
+       320            {/* Master Prompt Preview */}                             
+       321            <div className="mt-8">                                    
+       322              <h2 className="text-lg font-bold text-gray-900          
+             mb-4">Master Prompt Preview</h2>                                   
+                                                                                
+⏺ Checkpoint 2 complete! Now let's build the PromptReviewColumn component.      
+  First, let me check the data structure:                                       
+                                                                                
+⏺ Read(lib/store/prototype-store.ts)                                            
+  ⎿  Read 100 lines                                                             
+                                                                                
+⏺ Read(lib/store/prototype-store.ts)                                            
+  ⎿  Read 100 lines                                                             
+                                                                                
+⏺ Perfect! Now I'll create the PromptReviewColumn component:                    
+                                                                                
+⏺ Write(components/prompt-review-column.tsx)                                    
+  ⎿  Wrote 69 lines to components/prompt-review-column.tsx                      
+     import { PrototypePromptData } from "@/lib/types";                         
+     interface PromptReviewColumnProps {                                        
+       promptData: PrototypePromptData;                                         
+     }                                                                          
+     export function PromptReviewColumn({ promptData }:                         
+     PromptReviewColumnProps) {                                                 
+       // Helper function to highlight bracketed terms                          
+       const highlightBracketedTerms = (text: string) => {                      
+         return text.split(/(\[[^\]]+\])/g).map((part, i) => {                  
+     … +59 lines (ctrl+o to expand)                                             
+                                                                                
+⏺ Checkpoint 3 complete! Now let's create the TagBadge component first (needed  
+  by other components):                                                         
+                                                                                
+⏺ Write(components/tag-badge.tsx)                                               
+  ⎿  Wrote 38 lines to components/tag-badge.tsx                                 
+     import { X } from "lucide-react";                                          
+     import { cn } from "@/lib/utils";                                          
+     interface TagBadgeProps {                                                  
+       label: string;                                                           
+       removable?: boolean;                                                     
+       onRemove?: () => void;                                                   
+       className?: string;                                                      
+     }                                                                          
+     … +28 lines (ctrl+o to expand)                                             
+                                                                                
+⏺ Now let's create the metadata extraction utility. First, let me check the     
+  glossary data:                                                                
+                                                                                
+⏺ Read(lib/glossary-data.ts)                                                    
+  ⎿  Read 100 lines                                                             
+                                                                                
+⏺ Bash(grep -o 'category: .*'                                                   
+      /Users/jordymcintyre/ai-audio-gen/lib/glossary-data.ts | sort -u)         
+  ⎿  category: 'Articulation',                                                  
+     category: 'Dynamics & Expression',                                         
+     category: 'Genres & Styles',                                               
+     … +12 lines (ctrl+o to expand)                                             
+                                                                                
+⏺ Read(lib/types.ts)                                                            
+  ⎿  Read 50 lines                                                              
+                                                                                
+⏺ Now I'll create the metadata extraction utility:                              
+                                                                                
+⏺ Write(lib/extract-metadata.ts)                                                
+  ⎿  Wrote 217 lines to lib/extract-metadata.ts                                 
+     import { PrototypePromptData } from "./types";                             
+     import { glossaryTerms } from "./glossary-data";                           
+     export interface TechnicalDetails {                                        
+       bpm?: number;                                                            
+       key?: string;                                                            
+       timeSignature?: string;                                                  
+     }                                                                          
+     export interface CategorizedMetadata {                                     
+     … +207 lines (ctrl+o to expand)                                            
+                                                                                
+⏺ Excellent! Now let's build the MetadataExtractionColumn component:            
+                                                                                
+⏺ Write(components/metadata-extraction-column.tsx)                              
+  ⎿  Wrote 89 lines to components/metadata-extraction-column.tsx                
+     import { CategorizedMetadata } from "@/lib/extract-metadata";              
+     import { TagBadge } from "./tag-badge";                                    
+     interface MetadataExtractionColumnProps {                                  
+       metadata: CategorizedMetadata;                                           
+     }                                                                          
+     export function MetadataExtractionColumn({                                 
+       metadata,                                                                
+     }: MetadataExtractionColumnProps) {                                        
+     … +79 lines (ctrl+o to expand)                                             
+                                                                                
+⏺ Great progress! Now let's create the TagInput component:                      
+                                                                                
+⏺ Write(components/tag-input.tsx)                                               
+  ⎿  Wrote 65 lines to components/tag-input.tsx                                 
+     "use client";                                                              
+     import { useState, KeyboardEvent } from "react";                           
+     import { Input } from "@/components/ui/input";                             
+     import { TagBadge } from "./tag-badge";                                    
+     interface TagInputProps {                                                  
+       tags: string[];                                                          
+       onChange: (tags: string[]) => void;                                      
+       placeholder?: string;                                                    
+     … +55 lines (ctrl+o to expand)                                             
+                                                                                
+⏺ Perfect! Now let's create the submission store:                               
+                                                                                
+⏺ Write(lib/store/submission-store.ts)                                          
+  ⎿  Wrote 46 lines to lib/store/submission-store.ts                            
+     import { create } from "zustand";                                          
+     import { PrototypePromptData } from "@/lib/types";                         
+     import { SubmissionMetadata } from "@/lib/extract-metadata";               
+     interface SubmissionState {                                                
+       // Current submission data                                               
+       currentVersionNumber: number | null;                                     
+       currentPromptData: PrototypePromptData | null;                           
+       // Last submitted data (for demo purposes)                               
+     … +36 lines (ctrl+o to expand)                                             
+                                                                                
+⏺ Excellent! Now let's integrate everything into the submission page:           
+                                                                                
+⏺ Update(app/submission/page.tsx)                                               
+  ⎿  Added 47 lines, removed 1 line                                             
+        1    "use client";                                                      
+        2                                                                       
+        3 -  import { useState } from "react";                                  
+        3 +  import { useState, useEffect } from "react";                       
+        4    import { useRouter } from "next/navigation";                       
+        5    import { Button } from "@/components/ui/button";                   
+        6    import { Card } from "@/components/ui/card";                       
+        7    import { Textarea } from "@/components/ui/textarea";               
+        8    import { ArrowLeft, CheckCircle2 } from "lucide-react";            
+        9    import Link from "next/link";                                      
+       10 +  import { usePrototypeStore } from                                  
+          + "@/lib/store/prototype-store";                                      
+       11 +  import { useSubmissionStore } from                                 
+          + "@/lib/store/submission-store";                                     
+       12 +  import { PromptReviewColumn } from                                 
+          + "@/components/prompt-review-column";                                
+       13 +  import { MetadataExtractionColumn } from                           
+          + "@/components/metadata-extraction-column";                          
+       14 +  import { TagInput } from "@/components/tag-input";                 
+       15 +  import {                                                           
+       16 +    extractMetadata,                                                 
+       17 +    generateMasterPrompt,                                            
+       18 +  } from "@/lib/extract-metadata";                                   
+       19                                                                       
+       20    export default function SubmissionPage() {                         
+       21      const router = useRouter();                                      
+       22 +    const { getCurrentVersion } = usePrototypeStore();               
+       23 +    const { submitToLibrary } = useSubmissionStore();                
+       24 +                                                                     
+       25      const [isSubmitting, setIsSubmitting] = useState(false);         
+       26      const [showSuccess, setShowSuccess] = useState(false);           
+       27      const [description, setDescription] = useState(                  
+       28        "Melancholic neo-soul track with uplifting moments,            
+            perfect for reflective background music"                            
+       29      );                                                               
+       30 +    const [useCaseTags, setUseCaseTags] = useState<string[]>([       
+       31 +      "background music",                                            
+       32 +      "chill",                                                       
+       33 +    ]);                                                              
+       34                                                                       
+       35 +    const currentVersion = getCurrentVersion();                      
+       36 +                                                                     
+       37 +    // Redirect if no version available                              
+       38 +    useEffect(() => {                                                
+       39 +      if (!currentVersion) {                                         
+       40 +        router.push("/prompt-review");                               
+       41 +      }                                                              
+       42 +    }, [currentVersion, router]);                                    
+       43 +                                                                     
+       44 +    if (!currentVersion) {                                           
+       45 +      return null;                                                   
+       46 +    }                                                                
+       47 +                                                                     
+       48 +    // Extract metadata from current version                         
+       49 +    const extractedMetadata =                                        
+          + extractMetadata(currentVersion.promptData);                         
+       50 +    const masterPrompt =                                             
+          + generateMasterPrompt(currentVersion.promptData);                    
+       51 +                                                                     
+       52      const handleCancel = () => {                                     
+       53        router.push("/prompt-review");                                 
+       54      };                                                               
+     ...                                                                        
+       23      const handleSubmit = async () => {                               
+       24        setIsSubmitting(true);                                         
+       25                                                                       
+       26 +      // Prepare submission data                                     
+       27 +      const submissionData = {                                       
+       28 +        versionNumber: currentVersion.versionNumber,                 
+       29 +        promptData: currentVersion.promptData,                       
+       30 +        masterPrompt,                                                
+       31 +        ...extractedMetadata,                                        
+       32 +        useCaseTags,                                                 
+       33 +        description,                                                 
+       34 +      };                                                             
+       35 +                                                                     
+       36 +      // Submit to store (logs to console for demo)                  
+       37 +      submitToLibrary(submissionData);                               
+       38 +                                                                     
+       39        // Simulate API call                                           
+       40        await new Promise((resolve) => setTimeout(resolve,             
+            1000));                                                             
+       41                                                                       
+                                                                                
+⏺ Update(app/submission/page.tsx)                                               
+  ⎿  Added 8 lines, removed 16 lines                                            
+       110            {/* Version Info Header */}                               
+       111            <div className="mb-8">                                    
+       112              <h1 className="text-3xl font-bold text-gray-900">       
+       113 -              Submitting Version 2 for Library                      
+       113 +              Submitting Version                                    
+           +  {currentVersion.versionNumber} for Library                        
+       114              </h1>                                                   
+       115              <p className="text-gray-600 mt-2">                      
+       116                Review your prompt and add searchable metadata        
+     ...                                                                        
+       125                  <h2 className="text-xl font-bold                    
+             text-gray-900 mb-4">                                               
+       126                    Prompt Structure                                  
+       127                  </h2>                                               
+       128 -                                                                    
+       129 -                {/* Placeholder for PromptReviewColumn              
+           - component */}                                                      
+       130 -                <div className="space-y-4 text-sm                   
+           - text-gray-600">                                                    
+       131 -                  <p>Prompt review component will go                
+           - here...</p>                                                        
+       132 -                </div>                                              
+       128 +                <PromptReviewColumn                                 
+           + promptData={currentVersion.promptData} />                          
+       129                </Card>                                               
+       130              </div>                                                  
+       131                                                                      
+     ...                                                                        
+       142                  <p className="text-sm text-gray-600 mb-4">          
+       143                    Auto-extracted from your prompt                   
+       144                  </p>                                                
+       145 -                                                                    
+       146 -                {/* Placeholder for MetadataExtractionColumn        
+           - component */}                                                      
+       147 -                <div className="space-y-4 text-sm                   
+           - text-gray-600">                                                    
+       148 -                  <p>Metadata extraction component will go          
+           - here...</p>                                                        
+       149 -                </div>                                              
+       145 +                <MetadataExtractionColumn                           
+           + metadata={extractedMetadata} />                                    
+       146                </Card>                                               
+       147              </div>                                                  
+       148            </div>                                                    
+     ...                                                                        
+       158                <h3 className="text-lg font-semibold                  
+             text-gray-900 mb-3">                                               
+       159                  Add Use Case Tags                                   
+       160                </h3>                                                 
+       161 -                                                                    
+       162 -              {/* Placeholder for TagInput component */}            
+       163 -              <div className="text-sm text-gray-600">               
+       164 -                <p>Tag input component will go here...</p>          
+       165 -              </div>                                                
+       161 +              <TagInput                                             
+       162 +                tags={useCaseTags}                                  
+       163 +                onChange={setUseCaseTags}                           
+       164 +                placeholder="e.g., background music, workout,       
+           +  chill, study music"                                               
+       165 +              />                                                    
+       166              </Card>                                                 
+       167                                                                      
+       168              {/* Description */}                                     
+                                                                                
+⏺ Perfect! All components are integrated. Now let's test the complete workflow. 
+  Let me start by checking for any TypeScript errors:                           
+                                                                                
+⏺ Bash(npm run build 2>&1 | head -100)                                          
+  ⎿  Interrupted · What should Claude do instead?                               
+
