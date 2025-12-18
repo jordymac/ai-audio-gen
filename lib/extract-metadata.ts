@@ -140,7 +140,14 @@ export function categorizeTerms(terms: string[]): Omit<CategorizedMetadata, 'tec
     }
   });
 
-  return categorized;
+  return {
+    ...categorized,
+    negativeGenreTags: [],
+    negativeMoodTags: [],
+    negativeInstrumentTags: [],
+    negativePerformanceTags: [],
+    negativeProductionTags: [],
+  };
 }
 
 /**
